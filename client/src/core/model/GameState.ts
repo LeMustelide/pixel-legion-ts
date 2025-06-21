@@ -1,5 +1,5 @@
 import { Player } from './Player';
 
-interface GameState {
+export interface GameState {
   players: Record<string, Player>;
 }

@@ -1,35 +1,55 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import preactLogo from './assets/preact.svg'
-import viteLogo from '/vite.svg'
+import { connect } from '@net/socket';
 import './app.css'
 import { Game } from './core/game'
+import { SoloNetwork } from './core/network/SoloNetwork';
+import { MultiplayerNetwork } from './core/network/MultiplayerNetwork';
 
 export function App() {
   const [count, setCount] = useState(0)
+  const [isMultiplayer, setIsMultiplayer] = useState(false)
   const gameContainer = useRef<HTMLDivElement>(null)
+  const gameInstance = useRef<Game | null>(null)
 
+  // Création du jeu une seule fois
   useEffect(() => {
-    if (gameContainer.current) {
-      // eslint-disable-next-line no-new
-      new Game(gameContainer.current)
+    if (gameContainer.current && !gameInstance.current) {
+      const initialNetwork = isMultiplayer ? new MultiplayerNetwork() : new SoloNetwork();
+      if (isMultiplayer) connect();
+      gameInstance.current = new Game(gameContainer.current, initialNetwork);
     }
   }, [])
 
+  // Changement de mode réseau sans recréer le jeu
+  useEffect(() => {
+    if (!gameInstance.current) return;
+    let network;
+    if (isMultiplayer) {
+      connect();
+      network = new MultiplayerNetwork();
+    } else {
+      network = new SoloNetwork();
+    }
+    if (typeof gameInstance.current.setNetwork === 'function') {
+      gameInstance.current.setNetwork(network);
+    }
+  }, [isMultiplayer])
+
   return (
     <>
+      <h1>Pixel legion</h1>
+      <div style={{ marginBottom: 16 }}>
+        <button onClick={() => setIsMultiplayer(false)} disabled={!isMultiplayer}>
+          Solo
+        </button>
+        <button onClick={() => setIsMultiplayer(true)} disabled={isMultiplayer}>
+          Multijoueur
+        </button>
+      </div>
       <div
         ref={gameContainer}
         style={{ width: 800, height: 600, margin: '0 auto' }}
       />
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://preactjs.com" target="_blank">
-          <img src={preactLogo} class="logo preact" alt="Preact logo" />
-        </a>
-      </div>
-      <h1>Vite + Preact 2</h1>
       <div class="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}

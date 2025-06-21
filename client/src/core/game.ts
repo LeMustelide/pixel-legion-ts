@@ -1,54 +1,44 @@
-import { Application, Graphics, Assets, Sprite } from 'pixi.js';
-import { onState, sendAction } from '@net/socket';
-import type { Player } from './model/Player';
-
-interface GameState {
-  players: Record<string, Player>;
-}
+import { Application } from 'pixi.js';
+import { GameRenderer } from './GameRenderer';
+import type { GameState } from './model/GameState';
+import type { IGameNetwork } from './network/IGameNetwork';
 
 export class Game {
   app: Application;
-  units: Record<string, Graphics> = {};
+  renderer: GameRenderer;
+  network: IGameNetwork;
+  private stateCallback: ((state: GameState) => void) | null = null;
 
-  constructor(container: HTMLDivElement) {
+  constructor(container: HTMLDivElement, network: IGameNetwork) {
     this.app = new Application();
+    this.renderer = new GameRenderer(this.app.stage);
+    this.network = network;
     this.init(container);
+  }
+
+  setNetwork(network: IGameNetwork) {
+    this.network = network;
+    // Rebranche le callback d'état si déjà défini
+    if (this.stateCallback) {
+      this.network.onState(this.stateCallback);
+    }
   }
 
   private async init(container: HTMLDivElement) {
     await this.app.init({backgroundColor: 0x000000, resizeTo: container});
-
     container.appendChild(this.app.canvas);
 
-    // Écoute du state venant du serveur
-    // onState((state: any) => this.syncState(state));
+    this.network.onState((state: GameState) => this.syncState(state));
 
-    // Boucle de rendu
     this.app.ticker.add((dt) => this.update(dt.elapsedMS / 1000));
-    this.app.ticker.maxFPS = 60; // Limite à 60 FPS
-
-    // Input souris / clavier
+    this.app.ticker.maxFPS = 60;
     this.setupInput();
   }
 
   private syncState(state: GameState) {
-    // Met à jour/crée les unités
-    for (const [id, { x, y }] of Object.entries(state.players)) {
-      if (!this.units[id]) {
-        const gfx = new Graphics();
-        gfx.beginFill(0x00ff00).drawRect(-4, -4, 8, 8).endFill();
-        this.app.stage.addChild(gfx);
-        this.units[id] = gfx;
-      }
-      this.units[id].position.set(x, y);
-    }
-    // Supprime les unités disparues
-    for (const id of Object.keys(this.units)) {
-      if (!(id in state.players)) {
-        this.app.stage.removeChild(this.units[id]);
-        delete this.units[id];
-      }
-    }
+    this.renderer.renderPlayers(state.players);
+    // Sauvegarde le callback pour pouvoir le rebrancher
+    this.stateCallback = (s) => this.syncState(s);
   }
 
   private setupInput() {
@@ -56,11 +46,14 @@ export class Game {
       const rect = this.app.canvas.getBoundingClientRect();
       const x = evt.clientX - rect.left;
       const y = evt.clientY - rect.top;
-      sendAction({ type: 'move', payload: { x, y } });
+      this.network.sendAction({ type: 'move', payload: { x, y } });
     });
   }
 
   private update(dt: number) {
-    // Exemple : gestion locale, effets, particules, etc.
+    // Animation du déplacement en solo
+    if (typeof (this.network as any).update === 'function') {
+      (this.network as any).update(dt);
+    }
   }
 }
