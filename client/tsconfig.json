@@ -1,0 +1,14 @@
+{
+    "files": [],
+    "references": [
+        { "path": "./tsconfig.app.json" },
+        { "path": "./tsconfig.node.json" }
+    ],
+    "compilerOptions": {
+        "paths": {
+            "@core/*": ["./src/core/*"],
+            "@net/*": ["./src/net/*"],
+            "@cmp/*": ["./src/cmp/*"],
+        }
+    }
+}
