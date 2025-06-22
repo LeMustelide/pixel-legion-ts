@@ -96,6 +96,13 @@ export class Game {
       renderPlayer.smoothUpdate(dt);
     }
     // Force le re-rendu à chaque frame
+    this.renderer.renderPlayers(this.renderPlayers);    // Rendu des joueurs et leurs pixels
     this.renderer.renderPlayers(this.renderPlayers);
+    
+    // Rendu des pixels pour chaque joueur
+    for (const renderPlayer of Object.values(this.renderPlayers)) {
+      this.renderer.renderPlayerPixels(renderPlayer);
+      this.renderer.cleanupPixels(renderPlayer);
+    }
   }
 }

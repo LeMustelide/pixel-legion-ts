@@ -1,10 +1,13 @@
 import { Container, Graphics } from 'pixi.js';
 import type { Player } from './model/Player';
 import { RenderPlayer } from './RenderPlayer';
+import { SimplePixel } from './model/PixelPool';
+import type { PixelGroup } from './model/PixelGroup';
 
 export class GameRenderer {
   private container: Container;
   private playerGraphics: Record<string, Graphics> = {};
+  private pixelGraphics: Map<SimplePixel, Graphics> = new Map();
 
   constructor(container: Container) {
     this.container = container;
@@ -40,5 +43,80 @@ export class GameRenderer {
       this.container.removeChild(gfx);
       delete this.playerGraphics[id];
     }
+  }
+
+  /** Rendre tous les PixelGroups d'un joueur */
+  renderPlayerPixels(renderPlayer: RenderPlayer) {
+    if (!renderPlayer.ref.pixelGroups || renderPlayer.ref.pixelGroups.length === 0) {
+      return;
+    }
+
+    renderPlayer.ref.pixelGroups.forEach((group: PixelGroup) => {
+      this.renderPixelGroup(group);
+    });
+  }
+
+  /** Rendre un PixelGroup entier */
+  private renderPixelGroup(group: PixelGroup) {
+    group.pixels.forEach((pixel: SimplePixel) => {
+      this.renderPixel(pixel);
+    });
+  }
+
+  /** Rendre un pixel individuel */
+  private renderPixel(pixel: SimplePixel) {
+    let gfx = this.pixelGraphics.get(pixel);
+    
+    if (!gfx) {
+      // Créer un nouveau graphique pour ce pixel
+      gfx = new Graphics();
+      gfx.circle(0, 0, 3); // Rayon de 3 pixels
+      gfx.fill(pixel.color);
+      
+      this.container.addChild(gfx);
+      this.pixelGraphics.set(pixel, gfx);
+    }
+
+    // Mettre à jour la position
+    gfx.x = pixel.x;
+    gfx.y = pixel.y;
+  }
+
+  /** Nettoyer les pixels qui ne sont plus utilisés */
+  cleanupPixels(renderPlayer: RenderPlayer) {
+    const activePixels = new Set<SimplePixel>();
+    
+    // Récupérer tous les pixels actifs
+    if (renderPlayer.ref.pixelGroups) {
+      renderPlayer.ref.pixelGroups.forEach((group: PixelGroup) => {
+        group.pixels.forEach((pixel: SimplePixel) => {
+          activePixels.add(pixel);
+        });
+      });
+    }
+
+    // Supprimer les graphiques des pixels inactifs
+    for (const [pixel, gfx] of this.pixelGraphics.entries()) {
+      if (!activePixels.has(pixel)) {
+        this.container.removeChild(gfx);
+        gfx.destroy();
+        this.pixelGraphics.delete(pixel);
+      }
+    }
+  }
+  /** Nettoyer tous les pixels d'un joueur spécifique */
+  removePlayerPixels(renderPlayer: RenderPlayer) {
+    if (!renderPlayer.ref.pixelGroups) return;
+
+    renderPlayer.ref.pixelGroups.forEach((group: PixelGroup) => {
+      group.pixels.forEach((pixel: SimplePixel) => {
+        const gfx = this.pixelGraphics.get(pixel);
+        if (gfx) {
+          this.container.removeChild(gfx);
+          gfx.destroy();
+          this.pixelGraphics.delete(pixel);
+        }
+      });
+    });
   }
 }

@@ -1,5 +1,6 @@
 import { Player } from "../model/Player";
 import type { GameState } from "../model/GameState";
+import type { GameEvent } from "../../types/GameEvent.ts";
 
 function animatePlayerToTarget(player: Player, dt: number) {
   if (!player.target) return;
@@ -23,7 +24,7 @@ export class SoloServer {
   private listeners: Array<(state: GameState) => void> = [];
 
   constructor() {
-    this.state = { players: { local: new Player("local", 400, 300) } };
+    this.state = { players: { local: new Player("local", 400, 300) }, events: [] };
   }
 
   /** Simule la réception d'une action client (ex: move) */
@@ -36,6 +37,7 @@ export class SoloServer {
       };
     }
   }
+
   /** Appelée à chaque frame pour animer les déplacements */
   update(dt: number) {
     // Utilise le dt réel passé par le game loop au lieu d'un dt fixe

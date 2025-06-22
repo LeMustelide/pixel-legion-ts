@@ -1,57 +1,74 @@
 // src/modules/game/domain/Player.ts
 
+import { PixelGroup } from "./PixelGroup";
+
 export class Player {
-    private id: string;
-    private x: number;
-    private y: number;
-    private selected = false;
-    private speed = 100; // pixels/seconde
-    private target: { x: number; y: number } | null = null;
+  private id: string;
+  private x: number;
+  private y: number;
+  private selected = false;
+  private speed = 100; // pixels/seconde
+  private target: { x: number; y: number } | null = null;
+  public spawnPixelSpeed = 2;
+  public pixelGroups: PixelGroup[] = [];
 
-    constructor(id: string, x = 0, y = 0) {
-        this.id = id;
-        this.x = x;
-        this.y = y;
+  constructor(id: string, x = 0, y = 0) {
+    this.id = id;
+    this.x = x;
+    this.y = y;
+  }
+
+  moveTo(x: number, y: number) {
+    // tu peux ajouter de la logique : vitesse max, collisions…
+    this.x = x;
+    this.y = y;
+  }
+
+  /** Met à jour la position depuis le serveur */
+  update(dt: number) {
+    if (!this.target) return;
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 1) {
+      this.x = this.target.x;
+      this.y = this.target.y;
+      this.target = null;
+      return;
     }
+    const move = Math.min(this.speed * dt, dist);
+    this.x += (dx / dist) * move;
+    this.y += (dy / dist) * move;
+  }
 
-    moveTo(x: number, y: number) {
-        // tu peux ajouter de la logique : vitesse max, collisions…
-        this.x = x;
-        this.y = y;
-    }
+  /** Spawn un nouveau groupe de pixels */
+  spawnPixelGroup(pixelCount: number = 100, color: string = "red"): PixelGroup {
+    const group = new PixelGroup(pixelCount);
+    group.initializePixels(color);
+    // Positionner les pixels autour du joueur
+    group.pixels.forEach(pixel => {
+      pixel.x += this.x;
+      pixel.y += this.y;
+    });
+    this.pixelGroups.push(group);
+    return group;
+  }
 
-    /** Met à jour la position depuis le serveur */
-    update(dt: number) {
-        if (!this.target) return;
-        const dx = this.target.x - this.x;
-        const dy = this.target.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 1) {
-            this.x = this.target.x;
-            this.y = this.target.y;
-            this.target = null;
-            return;
-        }
-        const move = Math.min(this.speed * dt, dist);
-        this.x += (dx / dist) * move;
-        this.y += (dy / dist) * move;
-    }
+  /* GETTER AND SETTER */
 
-    /* GETTER AND SETTER */
+  getId(): string {
+    return this.id;
+  }
 
-    getId(): string {
-        return this.id;
-    }
+  getX(): number {
+    return this.x;
+  }
 
-    getX(): number {
-        return this.x;
-    }
+  getY(): number {
+    return this.y;
+  }
 
-    getY(): number {
-        return this.y;
-    }
-
-    setTarget(x: number, y: number) {
-        this.target = { x, y };
-    }
+  setTarget(x: number, y: number) {
+    this.target = { x, y };
+  }
 }

@@ -27,9 +27,22 @@ export class SoloNetwork implements IGameNetwork {
   }
 
   onState(cb: (state: GameState) => void) {
-    console.log(cb);
-    this.server.onState(cb);
-  }
+  this.server.onState((state) => {
+    // Traite les events
+    if (state.events) {
+      for (const event of state.events) {
+        if (event.type === "spawnPixelGroup") {
+          // Appelle la méthode de spawn côté client
+          // game.spawnPixelsForPlayer(event.playerId, event.data.count, event.data.color);
+        }
+        // Ajoute d'autres types d'événements ici
+      }
+      // Vide la liste d'événements après traitement
+      state.events = [];
+    }
+    cb(state);
+  });
+}
 
   sendAction(action: any) {
     console.log('Sending action:', action);
