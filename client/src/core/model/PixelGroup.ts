@@ -18,6 +18,7 @@ export class PixelGroup {
     for (let i = 0; i < this.pixelCount; i++) {
       const offsetX = Math.random() * 50 - 25;
       const offsetY = Math.random() * 50 - 25;
+      console.log(`Pixel ${i}: offsetX=${offsetX}, offsetY=${offsetY}`);
       const px = getPooledPixel(offsetX, offsetY, 10, color);
       this.pixels.push(px);
     }

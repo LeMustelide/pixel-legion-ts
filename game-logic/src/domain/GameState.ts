@@ -8,11 +8,17 @@ export class GameState {
   addPlayer(id: string) {
     this.players.set(id, new Player(id));
   }
+
   removePlayer(id: string) {
     this.players.delete(id);
   }
+
   getPlayer(id: string): Player | null {
     return this.players.get(id) || null;
+  }
+
+  getPlayers() {
+    return this.players;
   }
 
   /** appelée à chaque tick */
@@ -28,7 +34,18 @@ export class GameState {
       players: Object.fromEntries(
         Array.from(this.players.entries()).map(([id, p]) => [
           id,
-          { x: p.getX(), y: p.getY() },
+          {
+            x: p.x,
+            y: p.y,
+            pixelGroups: p.pixelGroups.map(pg => ({
+              pixelCount: pg.pixelCount,
+              pixels: pg.pixels.map(pixel => ({
+                x: pixel.x,
+                y: pixel.y,
+                color: pixel.color,
+              })),
+            })),
+          },
         ])
       ),
     };

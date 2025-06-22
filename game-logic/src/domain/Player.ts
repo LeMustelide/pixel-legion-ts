@@ -4,12 +4,13 @@ import { PixelGroup } from "./PixelGroup";
 
 export class Player {
   private id: string;
-  private x: number;
-  private y: number;
-  private selected = false;
-  private speed = 400; // pixels/seconde
+  public x: number;
+  public y: number;
+  // private selected = false;
+  private speed = 100; // pixels/seconde
   private target: { x: number; y: number } | null = null;
-  public spawnPixelSpeed = 2;
+  private _spawnTimer: number = 0;
+  private _spawnInterval: number = 1; // secondes entre chaque spawn
   public pixelGroups: PixelGroup[] = [];
 
   constructor(id: string, x = 0, y = 0) {
@@ -54,18 +55,27 @@ export class Player {
     return group;
   }
 
+  /**
+   * Tick de spawn automatique de PixelGroup.
+   * À appeler à chaque tick serveur (solo ou multi).
+   * Gère un timer interne pour chaque joueur.
+   */
+  
+
+  tickSpawn(dt: number) {
+    this._spawnTimer += dt;
+    if (this._spawnTimer >= this._spawnInterval) {
+      this._spawnTimer = 0;
+      console.log(`Spawning pixel group for player ${this.id}`);
+      // Tu peux personnaliser le nombre/couleur ici ou le passer en paramètre
+      this.spawnPixelGroup(100, "red");
+    }
+  }
+
   /* GETTER AND SETTER */
 
   getId(): string {
     return this.id;
-  }
-
-  getX(): number {
-    return this.x;
-  }
-
-  getY(): number {
-    return this.y;
   }
 
   setTarget(x: number, y: number) {

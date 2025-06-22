@@ -6,7 +6,6 @@ import { SoloNetwork } from './core/network/SoloNetwork';
 import { MultiplayerNetwork } from './core/network/MultiplayerNetwork';
 
 export function App() {
-  const [count, setCount] = useState(0)
   const [isMultiplayer, setIsMultiplayer] = useState(false)
   const gameContainer = useRef<HTMLDivElement>(null)
   const gameInstance = useRef<Game | null>(null)

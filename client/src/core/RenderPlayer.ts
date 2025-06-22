@@ -18,7 +18,7 @@ export class RenderPlayer {
   private previousTargetX: number;
   private previousTargetY: number;
   private interpolationStartTime: number;
-  private interpolationDuration: number = 100; // ms, durée d'interpolation fixe indépendante de la fréquence serveur
+  private interpolationDuration: number = 500; // ms, durée d'interpolation fixe indépendante de la fréquence serveur
   private hasNewTarget: boolean = false;
 
   constructor(player: Player) {
@@ -52,7 +52,7 @@ export class RenderPlayer {
   }
 
   /** Appelée à chaque frame côté client */
-  smoothUpdate(dt: number) {
+  smoothUpdate() {
     if (!this.hasNewTarget) {
       return; // Pas de mouvement en cours
     }

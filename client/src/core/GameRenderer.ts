@@ -1,5 +1,4 @@
 import { Container, Graphics } from 'pixi.js';
-import type { Player } from './model/Player';
 import { RenderPlayer } from './RenderPlayer';
 import { SimplePixel } from './model/PixelPool';
 import type { PixelGroup } from './model/PixelGroup';

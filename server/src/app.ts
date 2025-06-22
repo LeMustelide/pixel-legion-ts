@@ -30,8 +30,7 @@ io.on('connection', socket => {
       socket.join(roomId);
       if (!rooms.has(roomId)) {
         const svc = new GameService(
-          state => io.to(roomId).emit('state', state),
-          () => {}  // en multi, c’est le socket qui émet ses actions
+          state => io.to(roomId).emit('state', state)
         );
         rooms.set(roomId, svc);
       }

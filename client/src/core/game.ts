@@ -2,7 +2,6 @@ import { Application } from "pixi.js";
 import { GameRenderer } from "./GameRenderer";
 import type { GameState } from "./model/GameState";
 import type { IGameNetwork } from "./network/IGameNetwork";
-import type { Player } from "./model/Player";
 import { RenderPlayer } from "./RenderPlayer";
 
 export class Game {
@@ -11,7 +10,7 @@ export class Game {
   network: IGameNetwork;
   private stateCallback: ((state: GameState) => void) | null = null;
   private renderPlayers: Record<string, RenderPlayer> = {};
-  
+
   constructor(container: HTMLDivElement, network: IGameNetwork) {
     this.app = new Application();
     this.renderer = new GameRenderer(this.app.stage);
@@ -29,22 +28,22 @@ export class Game {
     }
   }
   private async init(container: HTMLDivElement) {
-    await this.app.init({ 
-      backgroundColor: 0x000000, 
+    await this.app.init({
+      backgroundColor: 0x000000,
       resizeTo: container,
       antialias: true,
       resolution: window.devicePixelRatio || 1,
-      autoDensity: true
+      autoDensity: true,
     });
     container.appendChild(this.app.canvas);
 
     this.network.onState((state: GameState) => this.syncState(state));
 
     // Configuration du ticker pour un rendu optimal
-    this.app.ticker.add((dt) => this.update(dt.elapsedMS / 1000));
+    this.app.ticker.add(() => this.update());
     this.app.ticker.maxFPS = 60;
     this.app.ticker.minFPS = 30;
-    
+
     this.setupInput();
   }
   private syncState(state: GameState) {
@@ -55,13 +54,16 @@ export class Game {
       } else {
         // Met à jour seulement la position pour le smoothing
         this.renderPlayers[id].updateServerPosition(player.x, player.y);
-        
+
         // Met à jour les autres propriétés sans écraser la référence si pas nécessaire
         if (this.renderPlayers[id].ref.selected !== player.selected) {
           this.renderPlayers[id].ref.selected = player.selected;
         }
-        // Ajouter d'autres propriétés ici si nécessaire (target, speed, etc.)
-      }    }
+        
+        this.renderPlayers[id].ref.pixelGroups = player.pixelGroups;
+      }
+        
+    }
     // Supprime les RenderPlayer obsolètes
     for (const id of Object.keys(this.renderPlayers)) {
       if (!(id in state.players)) {
@@ -91,14 +93,15 @@ export class Game {
     });
     this.app.canvas.tabIndex = 0;
   }
-  private update(dt: number) {
+
+  private update() {
     for (const renderPlayer of Object.values(this.renderPlayers)) {
-      renderPlayer.smoothUpdate(dt);
+      renderPlayer.smoothUpdate();
     }
     // Force le re-rendu à chaque frame
-    this.renderer.renderPlayers(this.renderPlayers);    // Rendu des joueurs et leurs pixels
+    this.renderer.renderPlayers(this.renderPlayers); // Rendu des joueurs et leurs pixels
     this.renderer.renderPlayers(this.renderPlayers);
-    
+
     // Rendu des pixels pour chaque joueur
     for (const renderPlayer of Object.values(this.renderPlayers)) {
       this.renderer.renderPlayerPixels(renderPlayer);

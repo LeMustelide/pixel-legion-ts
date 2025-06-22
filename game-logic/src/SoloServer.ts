@@ -15,16 +15,11 @@ export class SoloServer {
   /**
    * @param onState  callback appelé à chaque tick avec le state à afficher
    */
-  constructor(onState: StateCallback) {
-    // Instancie GameService en lui passant :
+  constructor(onState: StateCallback) {    // Instancie GameService en lui passant :
     // - onState  : pour remonter le state au front
-    // - sendAction : en solo, on redirige directement vers handleAction()
+    // - tickRateMs : intervalle de tick
     this.svc = new GameService(
       (state) => onState(state),
-      (_clientId, action: GameAction) => {
-        // dans le mode solo, seul 'localPlayer' joue
-        this.svc.handleAction(this.playerId, action);
-      },
       50, // tick toutes les 50ms
     );
 
