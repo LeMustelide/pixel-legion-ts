@@ -1,7 +1,6 @@
 // src/modules/game/domain/GameState.ts
 
 import { Player } from "./Player";
-import { GameAction } from "../dtos/actions";
 
 export class GameState {
   private players = new Map<string, Player>();

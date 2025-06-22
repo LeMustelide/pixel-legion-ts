@@ -2,8 +2,8 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server as IOServer } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
+import { GameService } from 'pixel-legion-game-logic';
 import Redis from 'ioredis';
-import { GameRoom } from './modules/game/GameRoom';
 
 const app = express();
 app.use(express.json());              // pour parser les JSON body si besoin
@@ -23,39 +23,38 @@ const subClient = pubClient.duplicate();
 io.adapter(createAdapter(pubClient, subClient));
 
 // Gestion des rooms
-const rooms = new Map<string, GameRoom>();
+const rooms = new Map<string, GameService>();
 
-io.on('connection', (socket) => {
-  console.log(`🔌 ${socket.id} connecté`);
-
-  socket.on('join', (roomId: string) => {
-    console.log(`🔍 ${socket.id} rejoint la room ${roomId}`);
-    socket.join(roomId);
-    if (!rooms.has(roomId)) {
-      rooms.set(roomId, new GameRoom(roomId, io));
-    }
-    rooms.get(roomId)!.addPlayer(socket);
-  });
-
-  socket.on('action', (action) => {
-    // on récupère la room (autre que la room "socket.id")
-    const roomId = Array.from(socket.rooms).find(r => r !== socket.id);
-    if (roomId && rooms.has(roomId)) {
-      rooms.get(roomId)!.handleAction(socket.id, action);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`❌ ${socket.id} déconnecté`);
-    // cleanup
-    for (const [roomId, room] of rooms.entries()) {
-      room.removePlayer(socket.id);
-      if (room.isEmpty()) {
-        room.close();
-        rooms.delete(roomId);
+io.on('connection', socket => {
+    socket.on('join', roomId => {
+      socket.join(roomId);
+      if (!rooms.has(roomId)) {
+        const svc = new GameService(
+          state => io.to(roomId).emit('state', state),
+          () => {}  // en multi, c’est le socket qui émet ses actions
+        );
+        rooms.set(roomId, svc);
       }
-    }
+      rooms.get(roomId)!.addPlayer(socket.id);
+    });
+
+    socket.on('action', action => {
+      for (const [roomId, svc] of rooms) {
+        if (socket.rooms.has(roomId)) {
+          svc.handleAction(socket.id, action);
+        }
+      }
+    });
+
+    socket.on('disconnect', () => {
+      for (const [roomId, svc] of rooms) {
+        svc.removePlayer(socket.id);
+        if (svc.isEmpty()) {
+          svc.dispose();
+          rooms.delete(roomId);
+        }
+      }
+    });
   });
-});
 
 export { app, httpServer };

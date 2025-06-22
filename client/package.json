@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "pixel-legion-game-logic": "file:../game-logic",
     "pixi.js": "^8.10.1",
     "preact": "^10.26.5",
     "socket.io-client": "^4.8.1"

@@ -7,7 +7,7 @@ export class Player {
   private x: number;
   private y: number;
   private selected = false;
-  private speed = 100; // pixels/seconde
+  private speed = 400; // pixels/seconde
   private target: { x: number; y: number } | null = null;
   public spawnPixelSpeed = 2;
   public pixelGroups: PixelGroup[] = [];

@@ -1,7 +1,8 @@
 // src/modules/game/handlers/ActionHandler.ts
 
-import { GameAction } from '../dtos/actions';
-import { GameRoom } from '../GameRoom';
+// src/modules/game/handlers/ActionHandler.ts
+import type { GameAction } from '../dtos/actions';
+import { GameService } from '../GameService';
 
 export interface ActionHandler<A extends GameAction = GameAction> {
   /** 
@@ -9,5 +10,5 @@ export interface ActionHandler<A extends GameAction = GameAction> {
    * @param clientId  ID du socket qui a envoyé l’action
    * @param action  L’action typée
    */
-  handle(room: GameRoom, clientId: string, action: A): void;
+  handle(room: GameService, clientId: string, action: A): void;
 }
