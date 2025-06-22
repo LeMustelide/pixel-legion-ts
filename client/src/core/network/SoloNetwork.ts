@@ -5,12 +5,19 @@ import { SoloServer } from './SoloServer';
 export class SoloNetwork implements IGameNetwork {
   private server: SoloServer;
   private tickInterval: any;
+  private lastTickTime: number = Date.now();
 
   constructor() {
     this.server = new SoloServer();
-    this.tickInterval = setInterval(() => this.server.update(0.05), 50); // 20 FPS
+    this.tickInterval = setInterval(() => this.tick(), 100); // Même fréquence que le serveur multi
   }
-  
+  private tick() {
+    const now = Date.now();
+    const dt = (now - this.lastTickTime) / 1000; // Temps réel en secondes
+    this.lastTickTime = now;
+    this.server.update(dt);
+  }
+
   close(): void {
     clearInterval(this.tickInterval);
   }

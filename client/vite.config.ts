@@ -11,4 +11,9 @@ export default defineConfig({
       '@cmp':  '/src/components',
     },
   },
+  server: {
+    watch: {
+      usePolling: true
+    },
+  },
 })

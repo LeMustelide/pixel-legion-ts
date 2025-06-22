@@ -36,8 +36,7 @@ export class GameRoom {
   handleAction(clientId: string, action: GameAction) {
     const handler = this.handlers[action.type];
     if (handler) handler.handle(this, clientId, action);
-  }
-  private tick() {
+  }  private tick() {
     const now = Date.now();
     const dt = (now - this.lastTickTime) / 1000; // Temps réel écoulé en secondes
     this.lastTickTime = now;
