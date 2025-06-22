@@ -4,7 +4,7 @@ import type { GameState } from '@core/model/GameState';
 let socket: Socket;
 
 export function connect() {
-  if (socket) {
+  if (socket && socket.connected) {
     console.warn('Socket déjà connecté');
     return socket;
   }
@@ -25,5 +25,20 @@ export function onState(cb: (state: GameState) => void) {
 }
 
 export function sendAction(action: any) {
+  console.log('Envoi de l\'action:', action);
   socket.emit('action', action);
+}
+
+export function joinRoom(roomId: string) {
+  console.log('Rejoindre la salle:', roomId);
+  socket.emit('join', roomId);
+}
+
+export function close() {
+  if (socket) {
+    console.log('Fermeture de la connexion socket');
+    socket.disconnect();
+  } else {
+    console.warn('Aucune connexion socket à fermer');
+  }
 }

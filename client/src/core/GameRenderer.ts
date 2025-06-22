@@ -1,5 +1,6 @@
 import { Container, Graphics } from 'pixi.js';
 import type { Player } from './model/Player';
+import { RenderPlayer } from './RenderPlayer';
 
 export class GameRenderer {
   private container: Container;
@@ -8,24 +9,21 @@ export class GameRenderer {
   constructor(container: Container) {
     this.container = container;
   }
-
-  renderPlayers(players: Record<string, Player>) {
+  renderPlayers(players: Record<string, RenderPlayer>) {
     // Ajoute ou met à jour les joueurs
     for (const [id, player] of Object.entries(players)) {
       let gfx = this.playerGraphics[id];
       if (!gfx) {
-        console.log(`Création du joueur ${id}`);
         gfx = new Graphics();
         gfx.rect(-8, -8, 16, 16).fill(0xffffff);
-        console.log(this.container.children);
         this.container.addChild(gfx);
-        console.log(this.container.children);
-        console.log(`Joueur ${id} ajouté`);
-        console.log(`Position du joueur ${id} : (${player.x}, ${player.y})`);
         this.playerGraphics[id] = gfx;
       }
-      gfx.position.set(player.x, player.y);
-      // Optionnel : changer la couleur si c'est le joueur local, etc.
+      
+      // Force les positions flottantes pour un rendu plus smooth
+      // Utilise directement les propriétés x/y au lieu de position.set()
+      gfx.x = player.renderX;
+      gfx.y = player.renderY;
     }
     // Supprime les joueurs disparus
     for (const id of Object.keys(this.playerGraphics)) {
@@ -36,5 +34,11 @@ export class GameRenderer {
     }
   }
 
-  
+  removePlayer(id: string) {
+    const gfx = this.playerGraphics[id];
+    if (gfx) {
+      this.container.removeChild(gfx);
+      delete this.playerGraphics[id];
+    }
+  }
 }

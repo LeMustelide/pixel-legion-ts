@@ -25,23 +25,6 @@ export class Player {
     this.target = { x: targetX, y: targetY };
   }
 
-  /** Avance le joueur vers sa cible selon sa vitesse et le temps écoulé */
-  update(dt: number) {
-    if (!this.target) return;
-    const dx = this.target.x - this.x;
-    const dy = this.target.y - this.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 1) {
-      this.x = this.target.x;
-      this.y = this.target.y;
-      this.target = null;
-      return;
-    }
-    const move = Math.min(this.speed * dt, dist);
-    this.x += (dx / dist) * move;
-    this.y += (dy / dist) * move;
-  }
-
   /** Sélection / désélection */
   setSelected(sel: boolean) {
     this.selected = sel;
