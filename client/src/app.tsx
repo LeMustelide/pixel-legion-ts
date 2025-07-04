@@ -7,6 +7,7 @@ import { MultiplayerNetwork } from './core/network/MultiplayerNetwork';
 
 export function App() {
   const [isMultiplayer, setIsMultiplayer] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const gameContainer = useRef<HTMLDivElement>(null)
   const gameInstance = useRef<Game | null>(null)
 
@@ -34,6 +35,14 @@ export function App() {
     }
   }, [isMultiplayer])
 
+  const handlePause = () => {
+    if (gameInstance.current) {
+      const newPausedState = !isPaused;
+      setIsPaused(newPausedState);
+      gameInstance.current.setPaused(newPausedState);
+    }
+  }
+
   return (
     <>
       <h1>Pixel legion</h1>
@@ -43,6 +52,9 @@ export function App() {
         </button>
         <button onClick={() => setIsMultiplayer(true)} disabled={isMultiplayer}>
           Multijoueur
+        </button>
+        <button onClick={handlePause} style={{ marginLeft: 16 }}>
+          {isPaused ? 'Resume' : 'Pause'}
         </button>
       </div>
       <div

@@ -20,11 +20,15 @@ export class GameState {
   getPlayers() {
     return this.players;
   }
-
   /** appelée à chaque tick */
   updatePhysics(dt: number) {
     for (const player of this.players.values()) {
       player.update(dt); // dt = temps écoulé en secondes depuis le dernier tick
+      
+      // Mise à jour des mouvements organiques de tous les pixels
+      for (const pixelGroup of player.pixelGroups) {
+        pixelGroup.updatePixels(dt);
+      }
     }
   }
 

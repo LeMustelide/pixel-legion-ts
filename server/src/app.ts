@@ -20,6 +20,16 @@ const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = Number(process.env.REDIS_PORT) || 6379;
 const pubClient = new Redis(REDIS_PORT, REDIS_HOST);
 const subClient = pubClient.duplicate();
+
+// Add error handlers for Redis clients
+pubClient.on('error', (err) => {
+  console.error('Redis pubClient error:', err);
+});
+
+subClient.on('error', (err) => {
+  console.error('Redis subClient error:', err);
+});
+
 io.adapter(createAdapter(pubClient, subClient));
 
 // Gestion des rooms
