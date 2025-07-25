@@ -4,6 +4,7 @@ export class PixelGroup {
   public pixelCount: number;
   public pixels: SimplePixel[] = [];
   public pixelMoveRadius: number;
+  public distributionType?: string; // Ajout pour compatibilité serveur
 
   constructor(pixelCount: number = 100, pixelInstance: SimplePixel[] = []) {
     this.pixelCount = pixelCount;

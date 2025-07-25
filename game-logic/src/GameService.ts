@@ -27,6 +27,11 @@ export class GameService {
   private tickInterval: ReturnType<typeof setInterval>;
   private lastTickTime: number = Date.now();
 
+  // Ajout : timers de spawn par joueur
+  private spawnTimers: Map<string, number> = new Map();
+  private readonly SPAWN_INTERVAL_SECONDS = 3;
+  private readonly PIXELS_PER_SPAWN = 50;
+
   /**
    * @param onState    callback pour recevoir l’état à chaque tick
    * @param sendAction callback facultatif pour renvoyer des actions
@@ -51,11 +56,13 @@ export class GameService {
   /** Ajoute un nouveau joueur à l’état */
   public addPlayer(clientId: string) {
     this.state.addPlayer(clientId);
+    this.spawnTimers.set(clientId, 0); // Initialiser le timer de spawn pour ce joueur
   }
 
   /** Retire un joueur de l’état */
   public removePlayer(clientId: string) {
     this.state.removePlayer(clientId);
+    this.spawnTimers.delete(clientId); // Nettoyer le timer de spawn
   }
 
   /**
@@ -76,14 +83,25 @@ export class GameService {
     const dt = (now - this.lastTickTime) / 1000; // Temps réel écoulé en secondes
     this.lastTickTime = now;
 
-    
+    // Gestion du spawn des PixelGroup pour chaque joueur, sans jamais effacer ceux des autres
+    for (const [id, player] of this.state.getPlayers().entries()) {
+      // Initialiser le timer si besoin
+      if (!this.spawnTimers.has(id)) {
+        this.spawnTimers.set(id, 0);
+      }
+      let timer = this.spawnTimers.get(id) ?? 0;
+      timer += dt;
+      if (timer >= this.SPAWN_INTERVAL_SECONDS) {
+        timer = 0;
+        player.spawnPixelGroup(this.PIXELS_PER_SPAWN, "red");
+        console.log(`Spawning pixel group for player ${id} (${player.pixelGroups.length})`);
+      }
+      this.spawnTimers.set(id, timer);
+    }
+
     this.state.updatePhysics(dt);
     const snapshot = this.state.snapshot();
     this.onState(snapshot);
-    // Dans le tick du serveur (solo ou multi)
-    for (const player of this.state.getPlayers().values()) {
-      player.tickSpawn(dt);
-    }
   }
 
   /** Stoppe la boucle de simulation */

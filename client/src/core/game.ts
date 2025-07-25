@@ -59,6 +59,8 @@ export class Game {
         if (this.renderPlayers[id].ref.selected !== player.selected) {
           this.renderPlayers[id].ref.selected = player.selected;
         }
+
+        console.log(`[DEBUG] Player ${id} PIXELS: ${player.pixelGroups.length}`);
         
         this.renderPlayers[id].ref.pixelGroups = player.pixelGroups;
       }
@@ -105,7 +107,8 @@ export class Game {
     // Rendu des pixels pour chaque joueur
     for (const renderPlayer of Object.values(this.renderPlayers)) {
       this.renderer.renderPlayerPixels(renderPlayer);
-      this.renderer.cleanupPixels(renderPlayer);
     }
+    // Nettoyage des pixels orphelins
+    this.renderer.cleanupPixels(this.renderPlayers);
   }
 }

@@ -81,19 +81,19 @@ export class GameRenderer {
     gfx.y = pixel.y;
   }
 
-  /** Nettoyer les pixels qui ne sont plus utilisés */
-  cleanupPixels(renderPlayer: RenderPlayer) {
+  /** Nettoyer les pixels qui ne sont plus utilisés par aucun joueur */
+  cleanupPixels(allRenderPlayers: Record<string, RenderPlayer>) {
     const activePixels = new Set<SimplePixel>();
-    
-    // Récupérer tous les pixels actifs
-    if (renderPlayer.ref.pixelGroups) {
-      renderPlayer.ref.pixelGroups.forEach((group: PixelGroup) => {
-        group.pixels.forEach((pixel: SimplePixel) => {
-          activePixels.add(pixel);
+    // Récupérer tous les pixels actifs de tous les joueurs
+    for (const renderPlayer of Object.values(allRenderPlayers)) {
+      if (renderPlayer.ref.pixelGroups) {
+        renderPlayer.ref.pixelGroups.forEach((group: PixelGroup) => {
+          group.pixels.forEach((pixel: SimplePixel) => {
+            activePixels.add(pixel);
+          });
         });
-      });
+      }
     }
-
     // Supprimer les graphiques des pixels inactifs
     for (const [pixel, gfx] of this.pixelGraphics.entries()) {
       if (!activePixels.has(pixel)) {

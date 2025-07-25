@@ -48,6 +48,7 @@ export class GameState {
                 y: pixel.y,
                 color: pixel.color,
               })),
+              distributionType: pg.distributionType,
             })),
           },
         ])
