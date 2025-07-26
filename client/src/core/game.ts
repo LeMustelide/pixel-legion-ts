@@ -27,6 +27,7 @@ export class Game {
       this.network.onState(this.stateCallback);
     }
   }
+
   private async init(container: HTMLDivElement) {
     await this.app.init({
       backgroundColor: 0x000000,
@@ -46,6 +47,7 @@ export class Game {
 
     this.setupInput();
   }
+
   private syncState(state: GameState) {
     // Ajoute ou met à jour les RenderPlayer
     for (const [id, player] of Object.entries(state.players)) {
@@ -110,5 +112,15 @@ export class Game {
     }
     // Nettoyage des pixels orphelins
     this.renderer.cleanupPixels(this.renderPlayers);
+  }
+
+  public pause() {
+    // this.app.stop();
+    this.network.pause();
+  }
+
+  public resume() {
+    // this.app.start();
+    this.network.resume();
   }
 }

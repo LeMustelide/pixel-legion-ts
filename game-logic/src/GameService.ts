@@ -109,6 +109,12 @@ export class GameService {
     clearInterval(this.tickInterval);
   }
 
+  /** Reprend la logique du jeu. */
+  public resume(): void {
+    this.lastTickTime = Date.now();
+    this.tickInterval = setInterval(() => this.tick(), this.tickRateMs);
+  }
+
   /**
    * Helper exposé aux handlers pour accéder à un joueur.
    * @param clientId identifiant du joueur

@@ -40,6 +40,16 @@ export class SoloNetwork implements IGameNetwork {
     });
   }
 
+  /** Met en pause la logique du jeu */
+  pause(): void {
+    this.solo.pause();
+  }
+
+  /** Reprend la logique du jeu après une pause */
+  resume(): void {
+    this.solo.resume();
+  }
+
   /** En solo, pas de notion de room – on peut reset l’état si besoin */
   joinRoom(_roomId: string): void {
     // Optionnel : this.solo.dispose(); this.solo = new SoloServer(this.stateCb!);
@@ -59,4 +69,5 @@ export class SoloNetwork implements IGameNetwork {
   close(): void {
     this.solo.dispose();
   }
+
 }

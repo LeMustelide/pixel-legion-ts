@@ -5,4 +5,11 @@ export interface IGameNetwork {
   sendAction(action: any): void;
   joinRoom(roomId: string): void;
   close(): void;
+  /**
+   * Met en pause la logique du jeu.
+   * En solo, cela stoppe la boucle de tick.
+   * En multijoueur, cela n'est pas pris en charge
+   */
+  pause(): void;
+  resume(): void;
 }

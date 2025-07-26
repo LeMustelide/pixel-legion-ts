@@ -40,4 +40,18 @@ export class SoloServer {
   public dispose() {
     this.svc.dispose();
   }
+
+  /**
+   * Met en pause la logique du jeu
+   */
+  public pause(): void {
+    this.svc.dispose();
+  }
+
+  /**
+   * Reprend la logique du jeu après une pause
+   */
+  public resume(): void {
+    this.svc.resume();
+  }   
 }

@@ -11,7 +11,6 @@ export function App() {
   const gameContainer = useRef<HTMLDivElement>(null)
   const gameInstance = useRef<Game | null>(null)
 
-  // Création du jeu une seule fois
   useEffect(() => {
     if (gameContainer.current && !gameInstance.current) {
       const initialNetwork = isMultiplayer ? new MultiplayerNetwork() : new SoloNetwork();
@@ -39,7 +38,11 @@ export function App() {
     if (gameInstance.current) {
       const newPausedState = !isPaused;
       setIsPaused(newPausedState);
-      gameInstance.current.setPaused(newPausedState);
+      if (newPausedState) {
+        gameInstance.current.pause();
+      } else {
+        gameInstance.current.resume();
+      }
     }
   }
 
@@ -61,19 +64,6 @@ export function App() {
         ref={gameContainer}
         style={{ width: 800, height: 600, margin: '0 auto' }}
       />
-      <p>
-        Check out{' '}
-        <a
-          href="https://preactjs.com/guide/v10/getting-started#create-a-vite-powered-preact-app"
-          target="_blank"
-        >
-          create-preact
-        </a>
-        , the official Preact + Vite starter
-      </p>
-      <p class="read-the-docs">
-        Click on the Vite and Preact logos to learn more
-      </p>
     </>
   )
 }
