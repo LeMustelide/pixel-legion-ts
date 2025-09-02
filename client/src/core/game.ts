@@ -3,11 +3,13 @@ import { GameRenderer } from "./GameRenderer";
 import type { GameState } from "./model/GameState";
 import type { IGameNetwork } from "./network/IGameNetwork";
 import { RenderPlayer } from "./RenderPlayer";
+import { StateSynchronizer } from "./StateSynchronizer";
 
 export class Game {
   app: Application;
   renderer: GameRenderer;
   network: IGameNetwork;
+  private stateSynchronizer: StateSynchronizer;
   private stateCallback: ((state: GameState) => void) | null = null;
   private renderPlayers: Record<string, RenderPlayer> = {};
   private currentPlayerId: string | null = null;
@@ -16,6 +18,7 @@ export class Game {
     this.app = new Application();
     this.renderer = new GameRenderer(this.app.stage);
     this.network = network;
+    this.stateSynchronizer = new StateSynchronizer(this.renderer, this.renderPlayers);
     this.init(container);
   }
 
@@ -39,7 +42,11 @@ export class Game {
     });
     container.appendChild(this.app.canvas);
 
-    this.network.onState((state: GameState) => this.syncState(state));
+    this.stateCallback = (state: GameState) => {
+      this.identifyCurrentPlayer();
+      this.stateSynchronizer.sync(state);
+    };
+    this.network.onState(this.stateCallback);
 
     // Configuration du ticker pour un rendu optimal
     this.app.ticker.add(() => this.update());
@@ -49,36 +56,6 @@ export class Game {
     this.setupInput();
   }
 
-  private syncState(state: GameState) {
-    // Identifie le joueur courant
-    this.identifyCurrentPlayer();
-    
-    // Ajoute ou met à jour les RenderPlayer
-    for (const [id, player] of Object.entries(state.players)) {
-      if (!this.renderPlayers[id]) {
-        this.renderPlayers[id] = new RenderPlayer(player);
-      } else {
-        // Met à jour seulement la position pour le smoothing
-        this.renderPlayers[id].updateServerPosition(player.x, player.y);
-
-        // Met à jour les autres propriétés sans écraser la référence si pas nécessaire
-        if (this.renderPlayers[id].ref.selected !== player.selected) {
-          this.renderPlayers[id].ref.selected = player.selected;
-        }
-        
-        this.renderPlayers[id].ref.pixelGroups = player.pixelGroups;
-      }
-    }
-    
-    // Supprime les RenderPlayer obsolètes
-    for (const id of Object.keys(this.renderPlayers)) {
-      if (!(id in state.players)) {
-        // Nettoie aussi le rendu graphique
-        this.renderer.removePlayer(id);
-        delete this.renderPlayers[id];
-      }
-    }
-  }
 
   private identifyCurrentPlayer() {
     // En mode solo, le joueur courant est toujours 'localPlayer'

@@ -94,7 +94,7 @@ export class GameRenderer {
   }
 
   /** Rendre un pixel individuel */
-  private renderPixel(pixel: SimplePixel, isHovered: boolean = false) {
+  private renderPixel(pixel: SimplePixel, _isHovered: boolean = false) {
     let gfx = this.pixelGraphics.get(pixel);
     
     if (!gfx) {
