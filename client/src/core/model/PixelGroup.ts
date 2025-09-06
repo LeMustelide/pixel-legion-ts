@@ -1,6 +1,7 @@
 import { getPooledPixel, SimplePixel } from "./PixelPool";
 
 export class PixelGroup {
+  public id: string;
   public pixelCount: number;
   public pixels: SimplePixel[] = [];
   public pixelMoveRadius: number;

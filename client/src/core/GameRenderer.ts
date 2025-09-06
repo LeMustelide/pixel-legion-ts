@@ -8,7 +8,7 @@ export class GameRenderer {
   private playerGraphics: Record<string, Graphics> = {};
   private pixelGraphics: Map<SimplePixel, Graphics> = new Map();
   private hoveredPlayerId: string | null = null;
-  private hoveredPixelGroup: any = null;
+  private hoveredPixelGroupId: string = "";
   private polygonGraphics: Graphics | null = null;
 
   constructor(container: Container) {
@@ -68,20 +68,17 @@ export class GameRenderer {
       return;
     }
     renderPlayer.ref.pixelGroups.forEach((group: PixelGroup) => {
-      const isGroupHovered = this.hoveredPixelGroup === group;
+      const isGroupHovered = this.hoveredPixelGroupId === group?.id;
       this.renderPixelGroup(group, isGroupHovered);
       
       // Si le groupe est survolé, affiche le polygone d'enveloppe
       if (isGroupHovered) {
         this.renderGroupPolygon(group);
-        console.log(`Rendering polygon for group`);
-      } else {
-        console.log(`Clearing polygon for group`);
       }
     });
     
     // Si aucun groupe n'est survolé, supprime le polygone
-    if (!this.hoveredPixelGroup) {
+    if (!this.hoveredPixelGroupId) {
       this.clearPolygon();
     }
   }
@@ -158,17 +155,17 @@ export class GameRenderer {
     const isHoveringPlayer = this.isHoveringPlayer(mouseX, mouseY, currentPlayerId, renderPlayers);
     
     // Trouve le groupe de pixels survolé (s'il y en a un)
-    const hoveredGroup = this.getHoveredPixelGroup(mouseX, mouseY, currentPlayerId, renderPlayers);
+    const hoveredGroup = this.getHoveredPixelGroupId(mouseX, mouseY, currentPlayerId, renderPlayers);
     
     // Met à jour les états d'hover
     this.setPlayerHover(currentPlayerId, isHoveringPlayer);
-    this.setHoveredPixelGroup(hoveredGroup && !isHoveringPlayer ? hoveredGroup : null);
+    this.setHoveredPixelGroup(hoveredGroup && !isHoveringPlayer ? hoveredGroup : "");
   }
 
   /** Désactive tous les effets d'hover */
   clearAllHover() {
     this.hoveredPlayerId = null;
-    this.setHoveredPixelGroup(null);
+    this.setHoveredPixelGroup("");
   }
 
   /** Définit l'état d'hover pour un joueur spécifique */
@@ -181,9 +178,10 @@ export class GameRenderer {
   }
 
   /** Définit le groupe de pixels actuellement survolé */
-  private setHoveredPixelGroup(group: any) {
-    this.hoveredPixelGroup = group;
-    if (!group) {
+  private setHoveredPixelGroup(groupId: string) {
+    console.log("setHoveredPixelGroup:", groupId);
+    this.hoveredPixelGroupId = groupId;
+    if (!groupId) {
       this.clearPolygon();
     }
   }
@@ -204,16 +202,19 @@ export class GameRenderer {
   }
 
   /** Trouve le groupe de pixels survolé */
-  private getHoveredPixelGroup(mouseX: number, mouseY: number, playerId: string, renderPlayers: Record<string, RenderPlayer>): any {
+  private getHoveredPixelGroupId(mouseX: number, mouseY: number, playerId: string, renderPlayers: Record<string, RenderPlayer>): string {
     const renderPlayer = renderPlayers[playerId];
-    if (!renderPlayer || !renderPlayer.ref.pixelGroups) return null;
+    if (!renderPlayer || !renderPlayer.ref.pixelGroups) return "";
     
-    for (const group of renderPlayer.ref.pixelGroups) {
+    // Parcours en ordre inverse pour détecter le groupe le plus récent (visuellement au-dessus)
+    for (let i = renderPlayer.ref.pixelGroups.length - 1; i >= 0; i--) {
+      const group = renderPlayer.ref.pixelGroups[i];
       if (this.isHoveringPixelGroup(mouseX, mouseY, group)) {
-        return group;
+        console.log("Groupe survolé:", group);
+        return group.id;
       }
     }
-    return null;
+    return "";
   }
 
   /** Vérifie si la souris survole un groupe de pixels */

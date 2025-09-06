@@ -4,6 +4,7 @@ import { GameState } from "./domain/GameState";
 import type { GameAction } from "./dtos/actions";
 import type { ActionHandler } from "./handlers/ActionHandler";
 import { MoveHandler } from "./handlers/MoveHandler";
+import { GameConfig } from "./config/GameConfig";
 
 /**
  * Callback appelé à chaque tick avec l’état sérialisé.
@@ -29,8 +30,6 @@ export class GameService {
 
   // Ajout : timers de spawn par joueur
   private spawnTimers: Map<string, number> = new Map();
-  private readonly SPAWN_INTERVAL_SECONDS = 3;
-  private readonly PIXELS_PER_SPAWN = 50;
 
   /**
    * @param onState    callback pour recevoir l’état à chaque tick
@@ -83,7 +82,7 @@ export class GameService {
     const dt = (now - this.lastTickTime) / 1000; // Temps réel écoulé en secondes
     this.lastTickTime = now;
 
-    // Gestion du spawn des PixelGroup pour chaque joueur, sans jamais effacer ceux des autres
+    // Gestion du spawn des PixelGroup pour chaque joueur
     for (const [id, player] of this.state.getPlayers().entries()) {
       // Initialiser le timer si besoin
       if (!this.spawnTimers.has(id)) {
@@ -91,10 +90,9 @@ export class GameService {
       }
       let timer = this.spawnTimers.get(id) ?? 0;
       timer += dt;
-      if (timer >= this.SPAWN_INTERVAL_SECONDS) {
+      if (timer >= GameConfig.SPAWN.INTERVAL_SECONDS) {
         timer = 0;
-        player.spawnPixelGroup(this.PIXELS_PER_SPAWN, "red");
-        console.log(`Spawning pixel group for player ${id} (${player.pixelGroups.length})`);
+        player.spawnPixelGroup(GameConfig.SPAWN.PIXELS_PER_SPAWN, "red");
       }
       this.spawnTimers.set(id, timer);
     }

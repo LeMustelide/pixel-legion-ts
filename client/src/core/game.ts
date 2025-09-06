@@ -56,7 +56,6 @@ export class Game {
     this.setupInput();
   }
 
-
   private identifyCurrentPlayer() {
     // En mode solo, le joueur courant est toujours 'localPlayer'
     if (this.network.constructor.name === 'SoloNetwork') {

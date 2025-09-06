@@ -1,13 +1,15 @@
 import { getPooledPixel, SimplePixel } from "./PixelPool";
 
 export class PixelGroup {
+  public id: string;
   public pixelCount: number;
   public pixels: SimplePixel[] = [];
   public pixelMoveRadius: number;
   public spreadRadius: number;
   public distributionType: 'circle' | 'cluster' = 'circle';
 
-  constructor(pixelCount: number = 100, pixelInstance: SimplePixel[] = []) {
+  constructor(pixelCount: number, pixelInstance: SimplePixel[] = []) {
+    this.id = crypto.randomUUID();
     this.pixelCount = pixelCount;
     this.pixelMoveRadius = this._calculatePixelMoveRadius(
       pixelCount,

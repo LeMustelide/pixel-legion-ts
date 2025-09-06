@@ -7,8 +7,8 @@ export const GameConfig = {
   // Paramètres de spawn
   SPAWN: {
     INTERVAL_SECONDS: 3,
-    PIXELS_PER_SPAWN: 50,
-    MAX_GROUPS_PER_PLAYER: 100,
+    PIXELS_PER_SPAWN: 15,
+    MAX_GROUPS_PER_PLAYER: 2,
   },
   
   // Paramètres de performance

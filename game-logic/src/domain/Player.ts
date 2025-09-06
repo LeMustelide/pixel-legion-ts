@@ -1,5 +1,6 @@
 // src/modules/game/domain/Player.ts
 
+import { GameConfig } from "../config/GameConfig";
 import { PixelGroup } from "./PixelGroup";
 
 export class Player {
@@ -44,7 +45,11 @@ export class Player {
    * @param pixelCount Nombre de pixels à spawner
    * @param color Couleur des pixels
    */
-  spawnPixelGroup(pixelCount: number = 100, color: string = "red"): PixelGroup {
+  spawnPixelGroup(pixelCount: number = 25, color: string = "red"): PixelGroup | null {
+    if (this.pixelGroups.length >= GameConfig.SPAWN.MAX_GROUPS_PER_PLAYER) {
+      console.warn(`Le joueur ${this.id} a atteint le nombre maximum de groupes de pixels.`);
+      return null;
+    }
     const group = new PixelGroup(pixelCount);
     group.initializePixels(color);
     // Positionner les pixels autour du joueur
@@ -54,6 +59,7 @@ export class Player {
       pixel.startX += this.x;
       pixel.startY += this.y;
     });
+    console.log("Nouveau groupe de pixels créé:", group);
     this.pixelGroups.push(group);
     return group;
   }

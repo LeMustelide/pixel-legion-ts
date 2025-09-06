@@ -1,5 +1,6 @@
 // src/modules/game/domain/GameState.ts
 
+import type { ServerState } from "../dtos/ServerStates";
 import { Player } from "./Player";
 
 export class GameState {
@@ -33,7 +34,7 @@ export class GameState {
   }
 
   /** sérialise l’état pour le client */
-  snapshot() {
+  snapshot(): ServerState {
     return {
       players: Object.fromEntries(
         Array.from(this.players.entries()).map(([id, p]) => [
@@ -42,6 +43,7 @@ export class GameState {
             x: p.x,
             y: p.y,
             pixelGroups: p.pixelGroups.map(pg => ({
+              id: pg.id,
               pixelCount: pg.pixelCount,
               pixels: pg.pixels.map(pixel => ({
                 x: pixel.x,

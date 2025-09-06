@@ -26,6 +26,7 @@ export class SoloNetwork implements IGameNetwork {
           if (playerData.pixelGroups) {
             player.pixelGroups = playerData.pixelGroups.map((groupData: any) => {
               const group = new PixelGroup(groupData.pixelCount);
+              group.id = groupData.id; // Préserver l'ID du serveur
               group.pixels = groupData.pixels.map((p: any) => {
                 // Utilise le constructeur ou une factory selon ta structure
                 return new SimplePixel(p.x, p.y, p.color); // ou new Pixel(p.x, p.y, p.color, ...)

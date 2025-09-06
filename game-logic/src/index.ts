@@ -13,4 +13,3 @@ export { SoloServer } from './SoloServer';
 
 // — Helper type: forme de l’état émis à chaque tick —  
 import { GameState as _GS } from './domain/GameState';
-export type ServerState = ReturnType<_GS['snapshot']>;

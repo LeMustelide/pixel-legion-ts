@@ -34,16 +34,4 @@ export class Player {
     this.selected = sel;
   }
   
-  /** Spawn un nouveau groupe de pixels */
-  spawnPixelGroup(pixelCount: number = 100, color: string = "red"): PixelGroup {
-    const group = new PixelGroup(pixelCount);
-    group.initializePixels(color);
-    // Positionner les pixels autour du joueur
-    group.pixels.forEach(pixel => {
-      pixel.x += this.x;
-      pixel.y += this.y;
-    });
-    this.pixelGroups.push(group);
-    return group;
-  }
 }
