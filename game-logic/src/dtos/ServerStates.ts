@@ -18,6 +18,18 @@ export interface SerializedPlayer {
   pixelGroups: SerializedPixelGroup[];
 }
 
+export type SerializedSelectedTarget =
+  | { kind: 'self' }
+  | { kind: 'group'; groupId: string };
+
+export interface SerializedPlayer {
+  id?: string;
+  x: number;
+  y: number;
+  pixelGroups: SerializedPixelGroup[];
+  selectedTarget?: SerializedSelectedTarget | null;
+}
+ 
 export interface ServerState {
   players: Record<string, SerializedPlayer>;
 }

@@ -48,6 +48,13 @@ export class Game {
     };
     this.network.onState(this.stateCallback);
 
+    // Subscribe to joined event if network exposes it
+    if ((this.network as any).onJoined) {
+      (this.network as any).onJoined((id: string) => {
+        this.currentPlayerId = id;
+      });
+    }
+
     // Configuration du ticker pour un rendu optimal
     this.app.ticker.add(() => this.update());
     this.app.ticker.maxFPS = 60;
@@ -57,15 +64,16 @@ export class Game {
   }
 
   private identifyCurrentPlayer() {
-    // En mode solo, le joueur courant est toujours 'localPlayer'
-    if (this.network.constructor.name === 'SoloNetwork') {
-      this.currentPlayerId = 'localPlayer';
-    } else {
-      // En mode multijoueur, on pourrait avoir un ID spécifique 
-      // Pour l'instant, on prend le premier joueur (à améliorer selon votre logique)
-      const playerIds = Object.keys(this.renderPlayers);
-      this.currentPlayerId = playerIds.length > 0 ? playerIds[0] : 'localPlayer';
+    // Prefer explicit local id if provided by the network
+    const localId = this.network.getLocalPlayerId();
+    if (localId) {
+      this.currentPlayerId = localId;
+      return;
     }
+
+    // Fallback : premier joueur connu
+    const playerIds = Object.keys(this.renderPlayers);
+    this.currentPlayerId = playerIds.length > 0 ? playerIds[0] : 'localPlayer';
   }
 
   private setupInput() {
@@ -78,9 +86,10 @@ export class Game {
       const selectedEntity = this.renderer.getHoveredEntity(this.currentPlayerId);
       if (selectedEntity) {
         this.network.sendAction({ type: "select", payload: { selectedEntity }});
+      } else {
+        this.network.sendAction({ type: "move", payload: { x, y } });
       }
 
-      this.network.sendAction({ type: "move", payload: { x, y } });
     });
     
     this.app.canvas.addEventListener("contextmenu", (evt) => {

@@ -2,6 +2,8 @@ import { io, Socket } from 'socket.io-client';
 import type { GameState } from '@core/model/GameState';
 
 let socket: Socket;
+let localPlayerId: string | null = null;
+let joinedCb: ((id: string) => void) | null = null;
 
 export function connect() {
   if (socket && socket.connected) {
@@ -17,11 +19,25 @@ export function connect() {
     console.log('Connecté au serveur, id=', socket.id);
   });
 
+  socket.on('joined', (data: { playerId: string }) => {
+    localPlayerId = data.playerId;
+    if (joinedCb) joinedCb(localPlayerId);
+  });
+
   return socket;
 }
 
 export function onState(cb: (state: GameState) => void) {
   socket.on('state', cb);
+}
+
+export function onJoined(cb: (id: string) => void) {
+  joinedCb = cb;
+  if (localPlayerId) cb(localPlayerId);
+}
+
+export function getLocalPlayerId() {
+  return localPlayerId;
 }
 
 export function sendAction(action: any) {

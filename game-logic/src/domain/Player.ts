@@ -3,6 +3,8 @@
 import { GameConfig } from "../config/GameConfig";
 import { PixelGroup } from "./PixelGroup";
 
+export type SelectedTarget = { kind: 'self' } | { kind: 'group'; groupId: string } | null;
+
 export class Player {
   private id: string;
   public x: number;
@@ -11,7 +13,15 @@ export class Player {
   private speed = 100; // pixels/seconde
   private target: { x: number; y: number } | null = null;
   public pixelGroups: PixelGroup[] = [];
-  public selectedEntity: 
+  public selectedTarget: SelectedTarget = null;
+
+  selectTarget(target: SelectedTarget) {
+    this.selectedTarget = target;
+  }
+
+  clearSelection() {
+    this.selectedTarget = null;
+  }
 
   constructor(id: string, x = 0, y = 0) {
     this.id = id;

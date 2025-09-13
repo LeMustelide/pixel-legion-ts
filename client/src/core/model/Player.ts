@@ -1,8 +1,9 @@
 // src/core/model/Player.ts
+import type { Selectable } from '@core/interface/Selectable';
 import { PixelGroup } from './PixelGroup';
 import { SimplePixel } from './PixelPool';
 
-export class Player {
+export class Player implements Selectable {
   public id: string;
   public x: number;
   public y: number;
@@ -17,8 +18,10 @@ export class Player {
   }
 
   /** Reconstruit un Player à partir d'un objet sérialisé côté serveur */
-  static fromSerialized(data: any): Player {
-    const p = new Player(data.id ?? '', data.x ?? 0, data.y ?? 0);
+  static fromSerialized(data: any, fallbackId?: string): Player {
+    // Use data.id if present, otherwise fallback to provided key (if any)
+    const id = data.id ?? fallbackId ?? '';
+    const p = new Player(id, data.x ?? 0, data.y ?? 0);
     if (data.pixelGroups && Array.isArray(data.pixelGroups)) {
       p.pixelGroups = data.pixelGroups.map((g: any) => {
         const group = new PixelGroup(g.pixelCount ?? 0);

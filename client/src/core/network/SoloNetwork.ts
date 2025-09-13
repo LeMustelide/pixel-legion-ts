@@ -21,12 +21,21 @@ export class SoloNetwork implements IGameNetwork {
         // Transform plain object players back to Map<string, Player>
         for (const [playerId, playerData] of Object.entries(state.players)) {
           // Utiliser la factory pour reconstruire proprement et éviter `any`
-          const player = Player.fromSerialized(playerData as any);
+          // On fournit playerId en fallback pour éviter un id vide
+          const player = Player.fromSerialized(playerData as any, playerId);
           gameState.players[playerId] = player;
         }
         this.stateCb(gameState);
       }
     });
+  }
+
+  getLocalPlayerId(): string | null {
+    return 'localPlayer';
+  }
+
+  onJoined(cb: (id: string) => void): void {
+    cb(this.getLocalPlayerId()!);
   }
 
   /** Met en pause la logique du jeu */

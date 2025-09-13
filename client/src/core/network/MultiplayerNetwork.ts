@@ -1,9 +1,16 @@
 import type { GameState } from '@core/model/GameState';
 import type { IGameNetwork } from './IGameNetwork';
-import { onState, sendAction, joinRoom, close } from '@net/socket';
-import { Server as IOServer } from 'socket.io';
+import { onState, sendAction, joinRoom, close, onJoined, getLocalPlayerId } from '@net/socket';
 
 export class MultiplayerNetwork implements IGameNetwork {
+
+  onJoined(cb: (id: string) => void) {
+    onJoined(cb);
+  }
+
+  getLocalPlayerId(): string | null {
+    return getLocalPlayerId();
+  }
 
   joinRoom(roomId: string): void {
     joinRoom(roomId);

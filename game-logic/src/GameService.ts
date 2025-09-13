@@ -46,6 +46,7 @@ export class GameService {
     // Instanciation de tous les handlers d’actions supportées
     this.handlers = {
       move: new MoveHandler(),
+      
     };
 
     // Démarre la boucle de simulation
