@@ -11,6 +11,7 @@ export class Player {
   private speed = 100; // pixels/seconde
   private target: { x: number; y: number } | null = null;
   public pixelGroups: PixelGroup[] = [];
+  public selectedEntity: 
 
   constructor(id: string, x = 0, y = 0) {
     this.id = id;
@@ -47,7 +48,6 @@ export class Player {
    */
   spawnPixelGroup(pixelCount: number = 25, color: string = "red"): PixelGroup | null {
     if (this.pixelGroups.length >= GameConfig.SPAWN.MAX_GROUPS_PER_PLAYER) {
-      console.warn(`Le joueur ${this.id} a atteint le nombre maximum de groupes de pixels.`);
       return null;
     }
     const group = new PixelGroup(pixelCount);
@@ -59,7 +59,6 @@ export class Player {
       pixel.startX += this.x;
       pixel.startY += this.y;
     });
-    console.log("Nouveau groupe de pixels créé:", group);
     this.pixelGroups.push(group);
     return group;
   }

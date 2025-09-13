@@ -10,6 +10,7 @@
             "@core/*": ["./src/core/*"],
             "@net/*": ["./src/net/*"],
             "@cmp/*": ["./src/cmp/*"],
-        }
+        },
+        "strict": true
     }
 }

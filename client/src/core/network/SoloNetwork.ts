@@ -4,8 +4,6 @@ import type { GameState } from '@core/model/GameState';
 import type { IGameNetwork } from './IGameNetwork';
 import { SoloServer }   from 'pixel-legion-game-logic';
 import { Player } from '@core/model/Player';
-import { PixelGroup } from '@core/model/PixelGroup';
-import { SimplePixel } from '@core/model/PixelPool';
 
 export class SoloNetwork implements IGameNetwork {
   private solo: SoloServer;
@@ -22,18 +20,8 @@ export class SoloNetwork implements IGameNetwork {
         };
         // Transform plain object players back to Map<string, Player>
         for (const [playerId, playerData] of Object.entries(state.players)) {
-          const player = new Player(playerId, playerData.x, playerData.y);
-          if (playerData.pixelGroups) {
-            player.pixelGroups = playerData.pixelGroups.map((groupData: any) => {
-              const group = new PixelGroup(groupData.pixelCount);
-              group.id = groupData.id; // Préserver l'ID du serveur
-              group.pixels = groupData.pixels.map((p: any) => {
-                // Utilise le constructeur ou une factory selon ta structure
-                return new SimplePixel(p.x, p.y, p.color); // ou new Pixel(p.x, p.y, p.color, ...)
-              });
-              return group;
-            });
-          }
+          // Utiliser la factory pour reconstruire proprement et éviter `any`
+          const player = Player.fromSerialized(playerData as any);
           gameState.players[playerId] = player;
         }
         this.stateCb(gameState);

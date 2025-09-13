@@ -9,7 +9,7 @@ import type { Player } from './model/Player';
  * - Côté client : interpolation basée sur le temps, pas sur les frames
  */
 export class RenderPlayer {
-  public ref: Player;
+  public playerRef: Player;
   public renderX: number;
   public renderY: number;
     // Variables pour l'interpolation temporelle
@@ -22,7 +22,7 @@ export class RenderPlayer {
   private hasNewTarget: boolean = false;
 
   constructor(player: Player) {
-    this.ref = player;
+    this.playerRef = player;
     this.renderX = player.x;
     this.renderY = player.y;
     this.currentTargetX = player.x;

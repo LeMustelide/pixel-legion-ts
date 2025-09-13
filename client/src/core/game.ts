@@ -12,7 +12,7 @@ export class Game {
   private stateSynchronizer: StateSynchronizer;
   private stateCallback: ((state: GameState) => void) | null = null;
   private renderPlayers: Record<string, RenderPlayer> = {};
-  private currentPlayerId: string | null = null;
+  private currentPlayerId: string = 'localPlayer';
 
   constructor(container: HTMLDivElement, network: IGameNetwork) {
     this.app = new Application();
@@ -64,7 +64,7 @@ export class Game {
       // En mode multijoueur, on pourrait avoir un ID spécifique 
       // Pour l'instant, on prend le premier joueur (à améliorer selon votre logique)
       const playerIds = Object.keys(this.renderPlayers);
-      this.currentPlayerId = playerIds.length > 0 ? playerIds[0] : null;
+      this.currentPlayerId = playerIds.length > 0 ? playerIds[0] : 'localPlayer';
     }
   }
 
@@ -73,6 +73,13 @@ export class Game {
       const rect = this.app.canvas.getBoundingClientRect();
       const x = evt.clientX - rect.left;
       const y = evt.clientY - rect.top;
+
+      // Vérifie que le click est sur une entité interactive
+      const selectedEntity = this.renderer.getHoveredEntity(this.currentPlayerId);
+      if (selectedEntity) {
+        this.network.sendAction({ type: "select", payload: { selectedEntity }});
+      }
+
       this.network.sendAction({ type: "move", payload: { x, y } });
     });
     

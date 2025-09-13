@@ -21,11 +21,11 @@ export class StateSynchronizer {
         this.renderPlayers[id].updateServerPosition(player.x, player.y);
 
         // Met à jour les autres propriétés sans écraser la référence si pas nécessaire
-        if (this.renderPlayers[id].ref.selected !== player.selected) {
-          this.renderPlayers[id].ref.selected = player.selected;
+        if (this.renderPlayers[id].playerRef.selected !== player.selected) {
+          this.renderPlayers[id].playerRef.selected = player.selected;
         }
 
-        this.renderPlayers[id].ref.pixelGroups = player.pixelGroups;
+        this.renderPlayers[id].playerRef = player;
       }
     }
 

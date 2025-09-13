@@ -2,18 +2,19 @@ import { Container, Graphics } from 'pixi.js';
 import { RenderPlayer } from './RenderPlayer';
 import { SimplePixel } from './model/PixelPool';
 import type { PixelGroup } from './model/PixelGroup';
+import type { Selectable } from './interface/Selectable';
 
 export class GameRenderer {
   private container: Container;
   private playerGraphics: Record<string, Graphics> = {};
   private pixelGraphics: Map<SimplePixel, Graphics> = new Map();
-  private hoveredPlayerId: string | null = null;
-  private hoveredPixelGroupId: string = "";
+  private hoveredEntity: Selectable | null = null;
   private polygonGraphics: Graphics | null = null;
 
   constructor(container: Container) {
     this.container = container;
   }
+
   renderPlayers(players: Record<string, RenderPlayer>) {
     // Ajoute ou met à jour les joueurs
     for (const [id, player] of Object.entries(players)) {
@@ -131,6 +132,7 @@ export class GameRenderer {
       }
     }
   }
+
   /** Nettoyer tous les pixels d'un joueur spécifique */
   removePlayerPixels(renderPlayer: RenderPlayer) {
     if (!renderPlayer.ref.pixelGroups) return;
@@ -146,6 +148,8 @@ export class GameRenderer {
       });
     });
   }
+
+  //#region Hover
 
   /** Gère l'hover basé sur la position de la souris */
   handleMouseMove(mouseX: number, mouseY: number, currentPlayerId: string, renderPlayers: Record<string, RenderPlayer>) {
@@ -171,15 +175,14 @@ export class GameRenderer {
   /** Définit l'état d'hover pour un joueur spécifique */
   private setPlayerHover(playerId: string, isHovered: boolean) {
     if (isHovered) {
-      this.hoveredPlayerId = playerId;
-    } else if (this.hoveredPlayerId === playerId) {
-      this.hoveredPlayerId = null;
+      this.hoveredEntity = playerId;
+    } else if (this.hoveredEntity === playerId) {
+      this.hoveredEntity = null;
     }
   }
 
   /** Définit le groupe de pixels actuellement survolé */
   private setHoveredPixelGroup(groupId: string) {
-    console.log("setHoveredPixelGroup:", groupId);
     this.hoveredPixelGroupId = groupId;
     if (!groupId) {
       this.clearPolygon();
@@ -210,7 +213,6 @@ export class GameRenderer {
     for (let i = renderPlayer.ref.pixelGroups.length - 1; i >= 0; i--) {
       const group = renderPlayer.ref.pixelGroups[i];
       if (this.isHoveringPixelGroup(mouseX, mouseY, group)) {
-        console.log("Groupe survolé:", group);
         return group.id;
       }
     }
@@ -218,7 +220,7 @@ export class GameRenderer {
   }
 
   /** Vérifie si la souris survole un groupe de pixels */
-  private isHoveringPixelGroup(mouseX: number, mouseY: number, group: any): boolean {
+  private isHoveringPixelGroup(mouseX: number, mouseY: number, group: PixelGroup): boolean {
     if (!group.pixels || group.pixels.length === 0) return false;
     
     // Calcule l'enveloppe convexe du groupe de pixels
@@ -230,7 +232,7 @@ export class GameRenderer {
   }
 
   /** Dessine le polygone d'enveloppe convexe autour d'un groupe de pixels */
-  private renderGroupPolygon(group: any) {
+  private renderGroupPolygon(group: PixelGroup) {
     if (!group.pixels || group.pixels.length < 3) return;
     
     // Calcule l'enveloppe convexe à chaque frame pour le mouvement en temps réel
@@ -385,4 +387,21 @@ export class GameRenderer {
     
     return inside;
   }
+
+  /** Retourne l'entité hoverée (joueur ou groupe de pixels) */
+  public getHoveredEntity(currentPlayerId: string): { type: 'player' | 'pixelGroup', id: string } | null {
+    if (this.hoveredPlayerId === currentPlayerId && this.hoveredPlayerId) {
+      return { type: 'player', id: this.hoveredPlayerId };
+    }
+
+    if (this.hoveredPixelGroupId) {
+      return { type: 'pixelGroup', id: this.hoveredPixelGroupId };
+    }
+
+    return null;
+  }
+
+  //#endregion
+
+
 }

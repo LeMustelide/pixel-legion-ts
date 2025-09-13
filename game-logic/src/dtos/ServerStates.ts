@@ -12,6 +12,7 @@ export interface SerializedPixelGroup {
 }
 
 export interface SerializedPlayer {
+  id?: string;
   x: number;
   y: number;
   pixelGroups: SerializedPixelGroup[];
