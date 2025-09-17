@@ -4,6 +4,7 @@ import { GameState } from "./domain/GameState";
 import type { GameAction } from "./dtos/actions";
 import type { ActionHandler } from "./handlers/ActionHandler";
 import { MoveHandler } from "./handlers/MoveHandler";
+import { SelectHandler } from "./handlers/SelectHandler";
 import { GameConfig } from "./config/GameConfig";
 
 /**
@@ -24,7 +25,7 @@ export type ActionSender = (clientId: string, action: GameAction) => void;
  */
 export class GameService {
   private state = new GameState();
-  private handlers: Record<string, ActionHandler>;
+  private handlers: Record<string, ActionHandler<any>>;
   private tickInterval: ReturnType<typeof setInterval>;
   private lastTickTime: number = Date.now();
 
@@ -46,7 +47,7 @@ export class GameService {
     // Instanciation de tous les handlers d’actions supportées
     this.handlers = {
       move: new MoveHandler(),
-      
+      select: new SelectHandler(),
     };
 
     // Démarre la boucle de simulation

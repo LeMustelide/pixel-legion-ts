@@ -2,20 +2,20 @@
 
 // src/modules/game/handlers/MoveHandler.ts
 import type { ActionHandler } from "./ActionHandler";
-import type { GameAction } from "../dtos/actions";
+import type { GameAction, SelectedEntity } from "../dtos/actions";
 import { GameService } from "../GameService";
 
-export class MoveHandler
-  implements ActionHandler<Extract<GameAction, { type: "move" }>>
+export class SelectHandler
+  implements ActionHandler<Extract<GameAction, { type: "select" }>>
 {
   handle(
     room: GameService,
     clientId: string,
-    action: { type: "move"; payload: { x: number; y: number } }
+    action: { type: "select"; payload: { selectedEntity: SelectedEntity } }
   ) {
     const player = room.getPlayer(clientId);
     if (!player) return;
-    const movable = player.getSelectedMovable() || player;
-    movable.setTarget(action.payload.x, action.payload.y);
+    const sel = action.payload.selectedEntity;
+    player.selectEntity(sel);
   }
 }

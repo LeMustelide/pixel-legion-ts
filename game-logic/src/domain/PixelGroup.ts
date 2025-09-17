@@ -1,6 +1,12 @@
 import { getPooledPixel, SimplePixel } from "./PixelPool";
+import type { Movable } from "./Movable";
 
-export class PixelGroup {
+/**
+ * PixelGroup devient "movable" : on lui ajoute une position centrale (x,y),
+ * une target et une vitesse. Lorsqu'on déplace le groupe, on translate tous les
+ * pixels en conséquence puis on laisse leur mouvement organique continuer.
+ */
+export class PixelGroup implements Movable {
   public id: string;
   public pixelCount: number;
   public pixels: SimplePixel[] = [];
@@ -8,7 +14,15 @@ export class PixelGroup {
   public spreadRadius: number;
   public distributionType: 'circle' | 'cluster' = 'circle';
 
-  constructor(pixelCount: number, pixelInstance: SimplePixel[] = []) {
+  // Position centrale du groupe
+  public x: number = 0;
+  public y: number = 0;
+
+  // Movement target for the whole group
+  private target: { x: number; y: number } | null = null;
+  private speed: number = 80; // pixels / seconde (ajustable)
+
+  constructor(pixelCount: number, pixelInstance: SimplePixel[] = [], x: number = 0, y: number = 0) {
     this.id = crypto.randomUUID();
     this.pixelCount = pixelCount;
     this.pixelMoveRadius = this._calculatePixelMoveRadius(
@@ -16,6 +30,8 @@ export class PixelGroup {
       pixelInstance.length
     );
     this.spreadRadius = this._calculateSpreadRadius(pixelCount);
+    this.x = x;
+    this.y = y;
   }
   
   initializePixels(color: string = "red"): void {
@@ -48,8 +64,61 @@ export class PixelGroup {
         offsetY = clusterY + (Math.random() * 20 - 10);
       }
       
+      // Position relative to group center
       const px = getPooledPixel(offsetX, offsetY, this.pixelMoveRadius, color);
       this.pixels.push(px);
+    }
+  }
+
+  /**
+   * Déplace le groupe vers une cible (interface Movable)
+   */
+  setTarget(x: number, y: number) {
+    this.target = { x, y };
+  }
+
+  update(dt: number): void {
+    // Move group center towards target if any
+    if (this.target) {
+      const dx = this.target.x - this.x;
+      const dy = this.target.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 1) {
+        // snap to target
+        const deltaX = this.target.x - this.x;
+        const deltaY = this.target.y - this.y;
+        this.translatePixels(deltaX, deltaY);
+        this.x = this.target.x;
+        this.y = this.target.y;
+        this.target = null;
+      } else {
+        const move = Math.min(this.speed * dt, dist);
+        const nx = (dx / dist) * move;
+        const ny = (dy / dist) * move;
+        this.translatePixels(nx, ny);
+        this.x += nx;
+        this.y += ny;
+      }
+    }
+
+    // Puis on met à jour le mouvement organique des pixels
+    this.updatePixels(dt);
+  }
+
+  /**
+   * Translate tous les pixels du groupe d'un delta donné
+   */
+  private translatePixels(dx: number, dy: number) {
+    for (const pixel of this.pixels) {
+      pixel.x += dx;
+      pixel.y += dy;
+      pixel.startX += dx;
+      pixel.startY += dy;
+      // Recentre aussi la target individuelle pour conserver le comportement
+      if (pixel.targetPos) {
+        pixel.targetPos.x += dx;
+        pixel.targetPos.y += dy;
+      }
     }
   }
 

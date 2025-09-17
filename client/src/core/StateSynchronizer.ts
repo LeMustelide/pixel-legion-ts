@@ -1,6 +1,7 @@
 import { GameRenderer } from "./GameRenderer";
 import { RenderPlayer } from "./RenderPlayer";
 import type { GameState } from "./model/GameState";
+import { Player } from "./model/Player";
 
 export class StateSynchronizer {
   private renderer: GameRenderer;
@@ -13,22 +14,22 @@ export class StateSynchronizer {
 
   sync(state: GameState) {
     // Ajoute ou met à jour les RenderPlayer
-    for (const [id, player] of Object.entries(state.players)) {
-      if (!this.renderPlayers[id]) {
-        this.renderPlayers[id] = new RenderPlayer(player);
+    for (const [playerId, playerData] of Object.entries(state.players)) {
+      if (!this.renderPlayers[playerId]) {
+        this.renderPlayers[playerId] = new RenderPlayer(playerData);
       } else {
         // Met à jour seulement la position pour le smoothing
-        this.renderPlayers[id].updateServerPosition(player.x, player.y);
-
+        this.renderPlayers[playerId].updateServerPosition(playerData.x, playerData.y);
+        
         // Met à jour les autres propriétés sans écraser la référence si pas nécessaire
-        if (this.renderPlayers[id].playerRef.selected !== player.selected) {
-          this.renderPlayers[id].playerRef.selected = player.selected;
+        if (this.renderPlayers[playerId].playerRef.selected !== playerData.selected) {
+          this.renderPlayers[playerId].playerRef.selected = playerData.selected;
         }
-
-        this.renderPlayers[id].playerRef = player;
+        
+        this.renderPlayers[playerId].playerRef = Player.fromSerialized(playerData);
       }
     }
-
+    
     // Supprime les RenderPlayer obsolètes
     for (const id of Object.keys(this.renderPlayers)) {
       if (!(id in state.players)) {

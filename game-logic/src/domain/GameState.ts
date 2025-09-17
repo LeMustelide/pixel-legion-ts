@@ -26,9 +26,11 @@ export class GameState {
     for (const player of this.players.values()) {
       player.update(dt); // dt = temps écoulé en secondes depuis le dernier tick
       
-      // Mise à jour des mouvements organiques de tous les pixels
+      // Mise à jour des mouvements : mettre à jour d'abord les groupes (déplacement global),
+      // puis les pixels organiques à l'intérieur des groupes (appelé depuis update()).
       for (const pixelGroup of player.pixelGroups) {
-        pixelGroup.updatePixels(dt);
+        // PixelGroup now exposes update(dt) which handles group translation + pixel updates
+        (pixelGroup as any).update(dt);
       }
     }
   }

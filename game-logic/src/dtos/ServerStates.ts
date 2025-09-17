@@ -20,7 +20,7 @@ export interface SerializedPlayer {
 
 export type SerializedSelectedTarget =
   | { kind: 'self' }
-  | { kind: 'group'; groupId: string };
+  | { kind: 'pixelGroup'; id: string };
 
 export interface SerializedPlayer {
   id?: string;

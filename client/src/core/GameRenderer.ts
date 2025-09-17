@@ -1,8 +1,9 @@
 import { Container, Graphics } from "pixi.js";
 import { SimplePixel } from "./model/PixelPool";
-import type { PixelGroup } from "./model/PixelGroup";
+import { PixelGroup } from "./model/PixelGroup";
 import type { RenderPlayer } from "./RenderPlayer";
 import type { Selectable } from "./interface/Selectable";
+import { Player } from "./model/Player";
 
 export class GameRenderer {
   private container: Container;
@@ -483,22 +484,22 @@ export class GameRenderer {
   /** Retourne l'entité hoverée (joueur ou groupe de pixels) */
   public getHoveredEntity(
     currentPlayerId: string
-  ): { type: "player" | "pixelGroup"; id: string } | null {
+  ): { kind: "player" | "pixelGroup"; id: string } | null {
     if (!this.hoveredEntity) return null;
 
     // If hovered is a RenderPlayer reference
-    if ((this.hoveredEntity as any).playerRef) {
-      const rp = this.hoveredEntity as unknown as RenderPlayer;
-      if (rp.playerRef.id === currentPlayerId) {
-        return { type: "player", id: rp.playerRef.id };
+    if (this.hoveredEntity instanceof Player) {
+      const rp = this.hoveredEntity;
+      if (rp.id === currentPlayerId) {
+        return { kind: "player", id: rp.id };
       }
       return null;
     }
 
     // If hovered is a PixelGroup
-    if ((this.hoveredEntity as any).pixels) {
-      const group = this.hoveredEntity as unknown as PixelGroup;
-      return { type: "pixelGroup", id: group.id };
+    if (this.hoveredEntity instanceof PixelGroup) {
+      const group = this.hoveredEntity;
+      return { kind: "pixelGroup", id: group.id };
     }
 
     return null;
