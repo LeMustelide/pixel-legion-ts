@@ -13,14 +13,21 @@ export class PixelGroup implements Movable {
   public pixelMoveRadius: number;
   public spreadRadius: number;
   public distributionType: 'circle' | 'cluster' = 'circle';
+  // Marqueur de destruction (pour retirer proprement après update combat)
+  public destroyed: boolean = false;
 
   // Position centrale du groupe
   public x: number = 0;
   public y: number = 0;
+  // Centre calculé (centroïde réel des pixels) - recalculé chaque updatePixels
+  private cx: number = 0;
+  private cy: number = 0;
 
   // Movement target for the whole group
   private target: { x: number; y: number } | null = null;
   private speed: number = 80; // pixels / seconde (ajustable)
+  // Accumulateur pour dégâts fractionnaires (ex: 2.4 dmg -> 2 maintenant, 0.4 conservé)
+  private damageRemainder: number = 0;
 
   constructor(pixelCount: number, pixelInstance: SimplePixel[] = [], x: number = 0, y: number = 0) {
     this.id = crypto.randomUUID();
@@ -150,8 +157,55 @@ export class PixelGroup implements Movable {
    * @param dt Delta time en secondes
    */
   updatePixels(dt: number): void {
+    if (this.pixels.length === 0) return;
+    // Met à jour les pixels puis recalcule un centroïde réaliste
+    let sumX = 0;
+    let sumY = 0;
     for (const pixel of this.pixels) {
       pixel.updatePosition(dt);
+      sumX += pixel.x;
+      sumY += pixel.y;
     }
+    this.cx = sumX / this.pixels.length;
+    this.cy = sumY / this.pixels.length;
+  }
+
+  /** Inflige des dégâts (perte de pixels) au groupe. Retourne le nombre de pixels détruits. */
+  applyDamage(rawDamage: number): number {
+    if (this.destroyed || this.pixelCount <= 0) return 0;
+    if (rawDamage <= 0) return 0;
+    // Ajoute la fraction restante précédente
+    let effective = rawDamage + this.damageRemainder;
+    const whole = Math.floor(effective);
+    this.damageRemainder = effective - whole;
+    const loss = Math.min(this.pixelCount, whole);
+    if (loss <= 0) return 0;
+
+    this.pixelCount -= loss;
+    // Retire réellement des pixels du tableau pour que le rendu client reflète la perte
+    // Simple: splice depuis la fin
+    for (let i = 0; i < loss; i++) {
+      this.pixels.pop();
+    }
+
+    if (this.pixelCount <= 0) {
+      this.pixelCount = 0;
+      this.destroyed = true;
+      this.pixels.length = 0;
+      this.damageRemainder = 0;
+    }
+    return loss;
+  }
+
+  /** Distance euclidienne aux centres */
+  distanceTo(other: PixelGroup): number {
+    // Utilise d'abord le centroïde dynamique si disponible, sinon le centre logique
+    const ax = this.pixels.length > 0 ? this.cx : this.x;
+    const ay = this.pixels.length > 0 ? this.cy : this.y;
+    const bx = other.pixels.length > 0 ? (other as any).cx ?? other.x : other.x;
+    const by = other.pixels.length > 0 ? (other as any).cy ?? other.y : other.y;
+    const dx = bx - ax;
+    const dy = by - ay;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 }

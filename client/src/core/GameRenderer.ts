@@ -13,9 +13,15 @@ export class GameRenderer {
   private polygonGraphics: Graphics | null = null;
   // padding en pixels appliqué aux formes d'hover
   private hoverPadding: number = 16;
+  // Effets de tir/attaque entre groupes
+  private attackGraphics: Graphics;
+  private readonly ATTACK_VISUAL_RANGE = 100; // doit correspondre à GameConfig.ATTACK.RANGE
 
   constructor(container: Container) {
     this.container = container;
+    // calque dédié aux effets d'attaque
+    this.attackGraphics = new Graphics();
+    this.container.addChild(this.attackGraphics);
   }
 
   renderPlayers(players: Record<string, RenderPlayer>) {
@@ -504,6 +510,111 @@ export class GameRenderer {
 
     return null;
   }
+
+  //#endregion
+
+  //#region Attack beams (visual shots between fighting groups)
+
+  /** Dessine des traits entre les groupes ennemis suffisamment proches (simulation client) */
+  public renderAttackBeams(allRenderPlayers: Record<string, RenderPlayer>) {
+    // Nettoie le calque à chaque frame
+    this.attackGraphics.clear();
+
+    const playerEntries = Object.entries(allRenderPlayers);
+    if (playerEntries.length < 2) return;
+
+    const time = Date.now() * 0.001; // secondes
+    const alpha = 0.5 + 0.4 * Math.sin(time * 6); // clignote un peu
+
+    // Pour chaque joueur, pour chaque groupe, relier au groupe adverse le plus proche dans la portée
+    for (let i = 0; i < playerEntries.length; i++) {
+      const [, rpA] = playerEntries[i];
+      const groupsA = rpA.playerRef.pixelGroups || [];
+      if (groupsA.length === 0) continue;
+
+      for (const gA of groupsA) {
+        const cA = this.getGroupCentroid(gA);
+        if (!cA) continue;
+
+        let best: { c: { x: number; y: number }; dist: number } | null = null;
+
+        for (let j = 0; j < playerEntries.length; j++) {
+          if (j === i) continue; // pas d'auto-cible
+          const [, rpB] = playerEntries[j];
+          const groupsB = rpB.playerRef.pixelGroups || [];
+          if (groupsB.length === 0) continue;
+
+          for (const gB of groupsB) {
+            const cB = this.getGroupCentroid(gB);
+            if (!cB) continue;
+            const d = this.dist(cA.x, cA.y, cB.x, cB.y);
+            if (d <= this.ATTACK_VISUAL_RANGE) {
+              if (!best || d < best.dist) best = { c: cB, dist: d };
+            }
+          }
+        }
+
+        if (best) {
+          // Dessine un trait entre cA et best.c
+          const color = 0xff5555; // rouge clair
+          const width = 2;
+          this.attackGraphics.poly([
+            { x: cA.x, y: cA.y },
+            { x: best.c.x, y: best.c.y },
+          ]).stroke({ width, color, alpha });
+
+          // Optionnel: petits segments en pointillés (illusion)
+          // this.drawDashed(cA.x, cA.y, best.c.x, best.c.y, 8, 6, color, alpha * 0.9);
+        }
+      }
+    }
+  }
+
+  private getGroupCentroid(group: PixelGroup): { x: number; y: number } | null {
+    if (!group.pixels || group.pixels.length === 0) return null;
+    let sx = 0,
+      sy = 0;
+    for (const p of group.pixels) {
+      sx += p.x;
+      sy += p.y;
+    }
+    const n = group.pixels.length;
+    return { x: sx / n, y: sy / n };
+  }
+
+  private dist(x1: number, y1: number, x2: number, y2: number): number {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Utilitaire pour dessiner des pointillés si souhaité
+  /* private drawDashed(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    dashLength: number,
+    gapLength: number,
+    color: number,
+    alpha: number
+  ) {
+    const total = this.dist(x1, y1, x2, y2);
+    const vx = (x2 - x1) / total;
+    const vy = (y2 - y1) / total;
+    let drawn = 0;
+    while (drawn < total) {
+      const sx = x1 + vx * drawn;
+      const sy = y1 + vy * drawn;
+      const ex = x1 + vx * Math.min(drawn + dashLength, total);
+      const ey = y1 + vy * Math.min(drawn + dashLength, total);
+      this.attackGraphics.poly([
+        { x: sx, y: sy },
+        { x: ex, y: ey },
+      ]).stroke({ width: 2, color, alpha });
+      drawn += dashLength + gapLength;
+    }
+  } */
 
   //#endregion
 }

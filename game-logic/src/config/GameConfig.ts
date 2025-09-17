@@ -8,7 +8,21 @@ export const GameConfig = {
   SPAWN: {
     INTERVAL_SECONDS: 3,
     PIXELS_PER_SPAWN: 15,
-    MAX_GROUPS_PER_PLAYER: 2,
+    MAX_GROUPS_PER_PLAYER: 10,
+  },
+  
+  // Combat / Attaque automatique entre groupes de joueurs différents
+  ATTACK: {
+    // Distance maximale entre centres de groupes pour engager le combat
+    RANGE: 100, // pixels
+    // NOUVELLE FORMULE : dégâts par seconde = attacker.pixelCount * PIXEL_DAMAGE_FACTOR
+    PIXEL_DAMAGE_FACTOR: 0.25, // 0.25 => 40 pixels infligent 10 pixels/sec
+    // (Déprécié) Ancienne formule à base de BASE_DPS + N * DPS_PER_PIXEL
+    BASE_DPS: 2,          // deprecated
+    DPS_PER_PIXEL: 0.10,  // deprecated
+    MIN_DPS: 1,           // deprecated
+    // Limite de perte de pixels par tick pour lisser la disparition (0 = illimité)
+    MAX_PIXEL_LOSS_PER_TICK: 0,
   },
   
   // Paramètres de performance

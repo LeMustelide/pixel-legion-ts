@@ -140,6 +140,8 @@ export class Game {
     for (const renderPlayer of Object.values(this.renderPlayers)) {
       this.renderer.renderPlayerPixels(renderPlayer);
     }
+    // Effets de tirs/attaques entre groupes proches
+    this.renderer.renderAttackBeams(this.renderPlayers);
     // Nettoyage des pixels orphelins
     this.renderer.cleanupPixels(this.renderPlayers);
   }
