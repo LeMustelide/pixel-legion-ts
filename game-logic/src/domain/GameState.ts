@@ -9,7 +9,11 @@ export class GameState {
   private players = new Map<string, Player>();
 
   addPlayer(id: string) {
-    this.players.set(id, new Player(id));
+    // Choisit une couleur depuis la palette en la cyclant
+    const palette = GameConfig.PLAYERS?.COLORS ?? ["#ff4d4d"];
+    const idx = this.players.size % palette.length;
+    const color = palette[idx];
+    this.players.set(id, new Player(id, 0, 0, color));
   }
 
   removePlayer(id: string) {

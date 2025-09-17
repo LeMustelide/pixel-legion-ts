@@ -94,7 +94,7 @@ export class GameService {
       timer += dt;
       if (timer >= GameConfig.SPAWN.INTERVAL_SECONDS) {
         timer = 0;
-        player.spawnPixelGroup(GameConfig.SPAWN.PIXELS_PER_SPAWN, "red");
+        player.spawnPixelGroup(GameConfig.SPAWN.PIXELS_PER_SPAWN);
       }
       this.spawnTimers.set(id, timer);
     }

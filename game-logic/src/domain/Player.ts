@@ -15,6 +15,7 @@ export class Player implements Movable {
   private id: string;
   public x: number;
   public y: number;
+  public color: string = "#ff4d4d"; // default, overridden at addPlayer
   // private selected = false;
   private speed = 100; // pixels/seconde
   private target: { x: number; y: number } | null = null;
@@ -42,10 +43,11 @@ export class Player implements Movable {
     this.selectedEntity = null;
   }
 
-  constructor(id: string, x = 0, y = 0) {
+  constructor(id: string, x = 0, y = 0, color?: string) {
     this.id = id;
     this.x = x;
     this.y = y;
+    if (color) this.color = color;
   }
 
   moveTo(x: number, y: number) {
@@ -77,13 +79,13 @@ export class Player implements Movable {
    */
   spawnPixelGroup(
     pixelCount: number = 25,
-    color: string = "red"
+    color?: string
   ): PixelGroup | null {
     if (this.pixelGroups.length >= GameConfig.SPAWN.MAX_GROUPS_PER_PLAYER) {
       return null;
     }
     const group = new PixelGroup(pixelCount, [], this.x, this.y);
-    group.initializePixels(color);
+    group.initializePixels(color ?? this.color);
     // Positionner les pixels autour du joueur
     group.pixels.forEach((pixel) => {
       pixel.x += this.x;

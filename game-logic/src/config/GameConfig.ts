@@ -10,6 +10,18 @@ export const GameConfig = {
     PIXELS_PER_SPAWN: 15,
     MAX_GROUPS_PER_PLAYER: 10,
   },
+  // Paramètres joueur
+  PLAYERS: {
+    // Palette cyclée à l'arrivée des joueurs
+    COLORS: [
+      "#ff4d4d", // rouge
+      "#4da6ff", // bleu
+      "#8cff66", // vert
+      "#ffcc00", // jaune
+      "#cc66ff", // violet
+      "#00e6e6", // cyan
+    ],
+  },
   
   // Combat / Attaque automatique entre groupes de joueurs différents
   ATTACK: {
