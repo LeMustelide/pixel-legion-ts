@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:latest
+    container_name: pixel-legion-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - pixel-legion-network
+  server:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+      additional_contexts:
+        logic: ../game-logic
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    container_name: pixel-legion-server
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    networks:
+      - pixel-legion-network
+  client:
+    build:
+      context: ../client
+      dockerfile: Dockerfile
+      additional_contexts:
+        logic: ../game-logic
+      args:
+        VITE_SERVER_URL: http://localhost:3000
+    container_name: pixel-legion-client
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    networks:
+      - pixel-legion-network
+    
+
+volumes:
+  redis-data:
+
+networks:
+  pixel-legion-network:
+    driver: bridge

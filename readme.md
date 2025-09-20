@@ -125,6 +125,20 @@ root/
 
 ---
 
+## ⚒️ Build docker
+
+1. **Build backend**
+
+   ```bash
+   docker build --build-context logic=./game-logic --pull --rm -f 'server\Dockerfile' -t 'ghcr.io/lemustelide/pixel-legion-ts/server:main' 'server'
+   ```
+
+2. **Build frontend**
+
+   ```bash
+   docker build --build-context logic=./game-logic --pull --rm -f 'client\Dockerfile' -t 'ghcr.io/lemustelide/pixel-legion-ts/client:main' 'client'
+   ```
+
 ## 🎯 Workflow WebSocket
 
 ```mermaid

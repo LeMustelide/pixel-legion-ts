@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        /* Language and Environment */
+        "target": "es2020",
+        /* Modules */
+        "module": "Commonjs",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        /* Type Checking */
+        "strict": true,
+        "skipLibCheck": true,
+
+        "declaration": true,
+        "emitDeclarationOnly": false,
+        "moduleResolution": "node",
+
+        /* Output directory for build */
+        "baseUrl": "./src",
+        "outDir": "dist"
+    },
+    "include": ["src"],
+}
