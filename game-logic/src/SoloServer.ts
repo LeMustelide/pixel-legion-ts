@@ -1,5 +1,6 @@
 // src/modules/game/SoloServer.ts
 
+import { GameConfig } from './config/GameConfig';
 import { GameService, type StateCallback } from './GameService';
 import type { GameAction } from './dtos/actions';
 
@@ -20,7 +21,7 @@ export class SoloServer {
     // - tickRateMs : intervalle de tick
     this.svc = new GameService(
       (state) => onState(state),
-      50, // tick toutes les 50ms
+      GameConfig.PERFORMANCE.LOCAL_TICK_RATE
     );
 
     // Ajoute le joueur local dès le départ

@@ -13,6 +13,12 @@ export class Game {
   private stateCallback: ((state: GameState) => void) | null = null;
   private renderPlayers: Record<string, RenderPlayer> = {};
   private currentPlayerId: string = 'localPlayer';
+  // Pointer / hold-to-move state
+  private isPointerDown: boolean = false;
+  private pointerX: number = 0;
+  private pointerY: number = 0;
+  private pointerHoldSendIntervalMs: number = 100; // send move every X ms while held
+  private lastPointerMoveSend: number = 0;
 
   constructor(container: HTMLDivElement, network: IGameNetwork) {
     this.app = new Application();
@@ -77,20 +83,45 @@ export class Game {
   }
 
   private setupInput() {
-    this.app.canvas.addEventListener("click", (evt) => {
+    this.app.canvas.addEventListener("pointerdown", (evt: PointerEvent) => {
       const rect = this.app.canvas.getBoundingClientRect();
       const x = evt.clientX - rect.left;
       const y = evt.clientY - rect.top;
 
-      // Vérifie que le click est sur une entité interactive
       const selectedEntity = this.renderer.getHoveredEntity(this.currentPlayerId);
       if (selectedEntity) {
+        this.renderPlayers[this.currentPlayerId]?.playerRef.selectEntity(selectedEntity);
         this.network.sendAction({ type: "select", payload: { selectedEntity }});
-      } else {
-        this.network.sendAction({ type: "move", payload: { x, y } });
+        return;
       }
 
+      this.isPointerDown = true;
+      this.pointerX = x;
+      this.pointerY = y;
+      this.lastPointerMoveSend = 0;
+      this.network.sendAction({ type: "move", payload: { x, y } });
+
+      try { (evt.target as HTMLElement).setPointerCapture(evt.pointerId); } catch (e) { /* ignore */ }
     });
+
+    this.app.canvas.addEventListener("pointermove", (evt: PointerEvent) => {
+      const rect = this.app.canvas.getBoundingClientRect();
+      const x = evt.clientX - rect.left;
+      const y = evt.clientY - rect.top;
+      this.pointerX = x;
+      this.pointerY = y;
+      this.handleMouseMove(x, y);
+    });
+
+    const endPointer = (evt?: PointerEvent) => {
+      this.isPointerDown = false;
+      if (evt && evt.pointerId != null) {
+        try { (evt.target as HTMLElement).releasePointerCapture(evt.pointerId); } catch (e) { /* ignore */ }
+      }
+    };
+
+    this.app.canvas.addEventListener("pointerup", endPointer);
+    this.app.canvas.addEventListener("pointercancel", endPointer);
     
     this.app.canvas.addEventListener("contextmenu", (evt) => {
       evt.preventDefault();
@@ -100,14 +131,6 @@ export class Game {
       if (evt.key === "p" || evt.key === "P") {
         this.network.joinRoom("default");
       }
-    });
-    
-    // Gestionnaires d'événements pour l'effet d'hover
-    this.app.canvas.addEventListener("mousemove", (evt) => {
-      const rect = this.app.canvas.getBoundingClientRect();
-      const x = evt.clientX - rect.left;
-      const y = evt.clientY - rect.top;
-      this.handleMouseMove(x, y);
     });
     
     this.app.canvas.addEventListener("mouseleave", () => {
@@ -144,6 +167,15 @@ export class Game {
     this.renderer.renderAttackBeams(this.renderPlayers);
     // Nettoyage des pixels orphelins
     this.renderer.cleanupPixels(this.renderPlayers);
+
+    // While pointer is held, periodically send move intentions to follow the pointer
+    if (this.isPointerDown) {
+      const now = performance.now();
+      if (now - this.lastPointerMoveSend >= this.pointerHoldSendIntervalMs) {
+        this.lastPointerMoveSend = now;
+        this.network.sendAction({ type: "move", payload: { x: this.pointerX, y: this.pointerY } });
+      }
+    }
   }
 
   public pause() {

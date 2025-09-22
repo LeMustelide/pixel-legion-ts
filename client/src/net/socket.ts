@@ -41,7 +41,6 @@ export function getLocalPlayerId() {
 }
 
 export function sendAction(action: any) {
-  console.log("Envoi de l'action:", action);
   socket.emit("action", action);
 }
 

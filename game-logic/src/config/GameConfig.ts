@@ -8,7 +8,7 @@ export const GameConfig = {
   SPAWN: {
     INTERVAL_SECONDS: 3,
     PIXELS_PER_SPAWN: 15,
-    MAX_GROUPS_PER_PLAYER: 10,
+    MAX_GROUPS_PER_PLAYER: 1,
   },
   // Paramètres joueur
   PLAYERS: {
@@ -45,6 +45,8 @@ export const GameConfig = {
     MIN_FPS: 30,
     // Nombre max de pixels affichables simultanément (tous joueurs confondus)
     MAX_TOTAL_PIXELS: 10000,
+    TICK_RATE: 50, // ms entre chaque tick serveur (GameService dans server)
+    LOCAL_TICK_RATE: 30 // ms entre chaque tick local (SoloServer dans client)
   },
   
   // Paramètres visuels des pixels

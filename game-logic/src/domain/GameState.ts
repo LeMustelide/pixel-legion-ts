@@ -102,7 +102,6 @@ export class GameState {
         Array.from(this.players.entries()).map(([id, p]) => [
           id,
           {
-            // Include the player id so the client can reconstruct Player.id
             id,
             x: p.x,
             y: p.y,

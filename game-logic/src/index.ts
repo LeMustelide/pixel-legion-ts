@@ -11,5 +11,8 @@ export { GameState } from './domain/GameState';
 export { GameService } from './GameService';
 export { SoloServer } from './SoloServer';
 
+// — Config —
+export { GameConfig } from './config/GameConfig';
+
 // — Helper type: forme de l’état émis à chaque tick —  
 import { GameState as _GS } from './domain/GameState';
