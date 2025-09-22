@@ -4,6 +4,7 @@ import { PixelGroup } from "./model/PixelGroup";
 import type { RenderPlayer } from "./RenderPlayer";
 import type { Selectable } from "./interface/Selectable";
 import { Player } from "./model/Player";
+import { Interpolator2D } from "./utils/Interpolator2D";
 
 export class GameRenderer {
   private container: Container;
@@ -13,9 +14,19 @@ export class GameRenderer {
   private polygonGraphics: Graphics | null = null;
   // padding en pixels appliqué aux formes d'hover
   private hoverPadding: number = 16;
+  // Effets de tir/attaque entre groupes
+  private attackGraphics: Graphics;
+  private readonly ATTACK_VISUAL_RANGE = 100; // doit correspondre à GameConfig.ATTACK.RANGE
+  // Interpolateurs par groupe de pixels pour smoothing local
+  private groupInterpolators: Map<string, Interpolator2D> = new Map();
+  // Décalage courant appliqué à l'affichage (interp - centroid)
+  private groupOffsets: Map<string, { x: number; y: number }> = new Map();
 
   constructor(container: Container) {
     this.container = container;
+    // calque dédié aux effets d'attaque
+    this.attackGraphics = new Graphics();
+    this.container.addChild(this.attackGraphics);
   }
 
   renderPlayers(players: Record<string, RenderPlayer>) {
@@ -31,8 +42,10 @@ export class GameRenderer {
       // Efface le contenu précédent
       gfx.clear();
 
-      // Applique l'effet d'hover si c'est le joueur survolé (référence)
-      const isHovered = this.hoveredEntity?.id === id;
+      // Applique l'effet d'hover si c'est le joueur survolé (référence) ou sélectionné
+      const isHovered =
+        this.hoveredEntity?.id === id ||
+        players[id].playerRef.selectedEntity?.id === id;
 
       if (isHovered) {
         // Effet d'hover : contour lumineux (avec padding)
@@ -71,7 +84,7 @@ export class GameRenderer {
     }
   }
 
-  /** Rendre tous les PixelGroups d'un joueur */
+  /** Rendre tous les PixelGroups d'un joueur (avec smoothing par groupe) */
   renderPlayerPixels(renderPlayer: RenderPlayer) {
     if (
       !renderPlayer.playerRef.pixelGroups ||
@@ -80,30 +93,62 @@ export class GameRenderer {
       return;
     }
     renderPlayer.playerRef.pixelGroups.forEach((group: PixelGroup) => {
-      const isGroupHovered = this.hoveredEntity?.id === group.id;
-      this.renderPixelGroup(group, isGroupHovered);
+      const isGroupHovered =
+        this.hoveredEntity?.id === group.id ||
+        renderPlayer.playerRef.selectedEntity?.id === group.id;
+      // Smoothing: calcule le centroïde et interpole sa position
+      const gid = group.id;
+      let offset = { x: 0, y: 0 };
+      if (gid) {
+        const centroid = this.getRawGroupCentroid(group);
+        if (centroid) {
+          let interp = this.groupInterpolators.get(gid);
+          if (!interp) {
+            interp = new Interpolator2D(centroid.x, centroid.y, 500);
+            this.groupInterpolators.set(gid, interp);
+          } else {
+            interp.setTarget(centroid.x, centroid.y);
+          }
+          const cur = interp.getValue();
+          offset = { x: cur.x - centroid.x, y: cur.y - centroid.y };
+          this.groupOffsets.set(gid, offset);
+        }
+      }
 
-      // Si le groupe est survolé, affiche le polygone d'enveloppe (avec padding)
+      this.renderPixelGroup(group, isGroupHovered, offset);
+
+      // Si le groupe est survolé OU sélectionné, affiche le polygone d'enveloppe (avec padding)
       if (isGroupHovered) {
         this.renderGroupPolygon(group);
       }
     });
 
-    // Si aucun groupe n'est survolé, supprime le polygone
-    if (!(this.hoveredEntity && "pixels" in this.hoveredEntity)) {
+    // Supprime le polygone seulement si aucun groupe n'est survolé ET qu'aucun groupe n'est sélectionné
+    const hasSelectedGroup = renderPlayer.playerRef.selectedEntity?.kind === "pixelGroup";
+    const hasHoveredGroup = this.hoveredEntity && "pixels" in this.hoveredEntity;
+    
+    if (!hasHoveredGroup && !hasSelectedGroup) {
       this.clearPolygon();
     }
   }
 
   /** Rendre un PixelGroup entier */
-  private renderPixelGroup(group: PixelGroup, isHovered: boolean = false) {
+  private renderPixelGroup(
+    group: PixelGroup,
+    isHovered: boolean = false,
+    offset: { x: number; y: number } = { x: 0, y: 0 }
+  ) {
     group.pixels.forEach((pixel: SimplePixel) => {
-      this.renderPixel(pixel, isHovered);
+      this.renderPixel(pixel, isHovered, offset);
     });
   }
 
   /** Rendre un pixel individuel */
-  private renderPixel(pixel: SimplePixel, _isHovered: boolean = false) {
+  private renderPixel(
+    pixel: SimplePixel,
+    _isHovered: boolean = false,
+    offset: { x: number; y: number } = { x: 0, y: 0 }
+  ) {
     let gfx = this.pixelGraphics.get(pixel);
 
     if (!gfx) {
@@ -117,17 +162,19 @@ export class GameRenderer {
     }
 
     // Mettre à jour la position
-    gfx.x = pixel.x;
-    gfx.y = pixel.y;
+    gfx.x = pixel.x + offset.x;
+    gfx.y = pixel.y + offset.y;
   }
 
   /** Nettoyer les pixels qui ne sont plus utilisés par aucun joueur */
   cleanupPixels(allRenderPlayers: Record<string, RenderPlayer>) {
     const activePixels = new Set<SimplePixel>();
+    const activeGroupIds = new Set<string>();
     // Récupérer tous les pixels actifs de tous les joueurs
     for (const renderPlayer of Object.values(allRenderPlayers)) {
       if (renderPlayer.playerRef.pixelGroups) {
         renderPlayer.playerRef.pixelGroups.forEach((group: PixelGroup) => {
+          if (group.id) activeGroupIds.add(group.id);
           group.pixels.forEach((pixel: SimplePixel) => {
             activePixels.add(pixel);
           });
@@ -140,6 +187,14 @@ export class GameRenderer {
         this.container.removeChild(gfx);
         gfx.destroy();
         this.pixelGraphics.delete(pixel);
+      }
+    }
+
+    // Nettoyer les interpolateurs et offsets des groupes inactifs
+    for (const gid of Array.from(this.groupInterpolators.keys())) {
+      if (!activeGroupIds.has(gid)) {
+        this.groupInterpolators.delete(gid);
+        this.groupOffsets.delete(gid);
       }
     }
   }
@@ -157,6 +212,10 @@ export class GameRenderer {
           this.pixelGraphics.delete(pixel);
         }
       });
+      if (group.id) {
+        this.groupInterpolators.delete(group.id);
+        this.groupOffsets.delete(group.id);
+      }
     });
   }
 
@@ -269,7 +328,15 @@ export class GameRenderer {
     if (!group.pixels || group.pixels.length === 0) return false;
 
     // Calcule l'enveloppe convexe du groupe de pixels
-    const convexHull = this.calculateConvexHull(group.pixels);
+    const offset = (group.id && this.groupOffsets.get(group.id)) || {
+      x: 0,
+      y: 0,
+    };
+    const adjusted = group.pixels.map((p) => ({
+      x: p.x + offset.x,
+      y: p.y + offset.y,
+    }));
+    const convexHull = this.calculateConvexHull(adjusted);
     if (convexHull.length < 3) return false; // Un polygone a besoin d'au moins 3 points
 
     // Agrandit légèrement l'enveloppe pour donner du padding visuel et fonctionnel
@@ -284,7 +351,15 @@ export class GameRenderer {
     if (!group.pixels || group.pixels.length < 3) return;
 
     // Calcule l'enveloppe convexe à chaque frame pour le mouvement en temps réel
-    const convexHull = this.calculateConvexHull(group.pixels);
+    const offset = (group.id && this.groupOffsets.get(group.id)) || {
+      x: 0,
+      y: 0,
+    };
+    const adjusted = group.pixels.map((p) => ({
+      x: p.x + offset.x,
+      y: p.y + offset.y,
+    }));
+    const convexHull = this.calculateConvexHull(adjusted);
     if (convexHull.length < 3) return;
 
     // Expand the hull to add visual padding
@@ -504,6 +579,123 @@ export class GameRenderer {
 
     return null;
   }
+
+  //#endregion
+
+  //#region Attack beams (visual shots between fighting groups)
+
+  /** Dessine des traits entre les groupes ennemis suffisamment proches (simulation client) */
+  public renderAttackBeams(allRenderPlayers: Record<string, RenderPlayer>) {
+    // Nettoie le calque à chaque frame
+    this.attackGraphics.clear();
+
+    const playerEntries = Object.entries(allRenderPlayers);
+    if (playerEntries.length < 2) return;
+
+    const time = Date.now() * 0.001; // secondes
+    const alpha = 0.5 + 0.4 * Math.sin(time * 6); // clignote un peu
+
+    // Pour chaque joueur, pour chaque groupe, relier au groupe adverse le plus proche dans la portée
+    for (let i = 0; i < playerEntries.length; i++) {
+      const [, rpA] = playerEntries[i];
+      const groupsA = rpA.playerRef.pixelGroups || [];
+      if (groupsA.length === 0) continue;
+
+      for (const gA of groupsA) {
+        const cA = this.getGroupCentroid(gA);
+        if (!cA) continue;
+
+        let best: { c: { x: number; y: number }; dist: number } | null = null;
+
+        for (let j = 0; j < playerEntries.length; j++) {
+          if (j === i) continue; // pas d'auto-cible
+          const [, rpB] = playerEntries[j];
+          const groupsB = rpB.playerRef.pixelGroups || [];
+          if (groupsB.length === 0) continue;
+
+          for (const gB of groupsB) {
+            const cB = this.getGroupCentroid(gB);
+            if (!cB) continue;
+            const d = this.dist(cA.x, cA.y, cB.x, cB.y);
+            if (d <= this.ATTACK_VISUAL_RANGE) {
+              if (!best || d < best.dist) best = { c: cB, dist: d };
+            }
+          }
+        }
+
+        if (best) {
+          // Dessine un trait entre cA et best.c
+          const color = 0xff5555; // rouge clair
+          const width = 2;
+          this.attackGraphics
+            .poly([
+              { x: cA.x, y: cA.y },
+              { x: best.c.x, y: best.c.y },
+            ])
+            .stroke({ width, color, alpha });
+
+          // Optionnel: petits segments en pointillés (illusion)
+          // this.drawDashed(cA.x, cA.y, best.c.x, best.c.y, 8, 6, color, alpha * 0.9);
+        }
+      }
+    }
+  }
+
+  private getGroupCentroid(group: PixelGroup): { x: number; y: number } | null {
+    // Centroid utilisé pour l'affichage (inclut le décalage visuel s'il existe)
+    const base = this.getRawGroupCentroid(group);
+    if (!base) return null;
+    const off = (group.id && this.groupOffsets.get(group.id)) || { x: 0, y: 0 };
+    return { x: base.x + off.x, y: base.y + off.y };
+  }
+
+  private getRawGroupCentroid(
+    group: PixelGroup
+  ): { x: number; y: number } | null {
+    if (!group.pixels || group.pixels.length === 0) return null;
+    let sx = 0,
+      sy = 0;
+    for (const p of group.pixels) {
+      sx += p.x;
+      sy += p.y;
+    }
+    const n = group.pixels.length;
+    return { x: sx / n, y: sy / n };
+  }
+
+  private dist(x1: number, y1: number, x2: number, y2: number): number {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Utilitaire pour dessiner des pointillés si souhaité
+  /* private drawDashed(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    dashLength: number,
+    gapLength: number,
+    color: number,
+    alpha: number
+  ) {
+    const total = this.dist(x1, y1, x2, y2);
+    const vx = (x2 - x1) / total;
+    const vy = (y2 - y1) / total;
+    let drawn = 0;
+    while (drawn < total) {
+      const sx = x1 + vx * drawn;
+      const sy = y1 + vy * drawn;
+      const ex = x1 + vx * Math.min(drawn + dashLength, total);
+      const ey = y1 + vy * Math.min(drawn + dashLength, total);
+      this.attackGraphics.poly([
+        { x: sx, y: sy },
+        { x: ex, y: ey },
+      ]).stroke({ width: 2, color, alpha });
+      drawn += dashLength + gapLength;
+    }
+  } */
 
   //#endregion
 }

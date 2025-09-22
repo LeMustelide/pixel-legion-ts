@@ -1,4 +1,5 @@
-import type { Player } from './model/Player';
+import { Player } from './model/Player';
+import { Interpolator2D } from './utils/Interpolator2D';
 
 /**
  * Wrapper d'affichage pour un joueur, utilisé côté client uniquement.
@@ -12,69 +13,24 @@ export class RenderPlayer {
   public playerRef: Player;
   public renderX: number;
   public renderY: number;
-    // Variables pour l'interpolation temporelle
-  private currentTargetX: number;
-  private currentTargetY: number;
-  private previousTargetX: number;
-  private previousTargetY: number;
-  private interpolationStartTime: number;
-  private interpolationDuration: number = 500; // ms, durée d'interpolation fixe indépendante de la fréquence serveur
-  private hasNewTarget: boolean = false;
+  // Interpolateur générique réutilisable
+  private interpolator: Interpolator2D;
 
   constructor(player: Player) {
-    this.playerRef = player;
+    this.playerRef = Player.fromSerialized(player, player.id);
     this.renderX = player.x;
     this.renderY = player.y;
-    this.currentTargetX = player.x;
-    this.currentTargetY = player.y;
-    this.previousTargetX = player.x;
-    this.previousTargetY = player.y;
-    this.interpolationStartTime = Date.now();
-  }  /** Met à jour la position cible quand on reçoit des données du serveur */
+    this.interpolator = new Interpolator2D(player.x, player.y, 500);
+  }  
+  /** Met à jour la position cible quand on reçoit des données du serveur */
   updateServerPosition(x: number, y: number) {
-    // Vérifier si c'est vraiment une nouvelle position
-    const deltaX = Math.abs(x - this.currentTargetX);
-    const deltaY = Math.abs(y - this.currentTargetY);
-    
-    if (deltaX > 0.1 || deltaY > 0.1) {      
-      // La position actuelle devient l'ancienne cible
-      this.previousTargetX = this.renderX; // Position visuelle actuelle
-      this.previousTargetY = this.renderY;
-      
-      // Nouvelle cible
-      this.currentTargetX = x;
-      this.currentTargetY = y;
-      
-      // Redémarre l'interpolation
-      this.interpolationStartTime = Date.now();
-      this.hasNewTarget = true;
-    }
+    this.interpolator.setTarget(x, y);
   }
 
   /** Appelée à chaque frame côté client */
   smoothUpdate() {
-    if (!this.hasNewTarget) {
-      return; // Pas de mouvement en cours
-    }
-
-    const now = Date.now();
-    const elapsed = now - this.interpolationStartTime;
-    const progress = Math.min(elapsed / this.interpolationDuration, 1.0);
-      // Fonction d'easing pour un mouvement plus naturel (ease-out)
-    // const easedProgress = 1 - Math.pow(1 - progress, 3);
-    
-    // Test avec interpolation linéaire pure pour débugger
-    const easedProgress = progress;
-    
-    // Interpolation linéaire avec easing
-    this.renderX = this.previousTargetX + (this.currentTargetX - this.previousTargetX) * easedProgress;
-    this.renderY = this.previousTargetY + (this.currentTargetY - this.previousTargetY) * easedProgress;
-    
-    // Fin de l'interpolation
-    if (progress >= 1.0) {
-      this.renderX = this.currentTargetX;
-      this.renderY = this.currentTargetY;
-      this.hasNewTarget = false;
-    }
+    const v = this.interpolator.getValue();
+    this.renderX = v.x;
+    this.renderY = v.y;
   }
 }

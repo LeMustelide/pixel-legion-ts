@@ -2,7 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server as IOServer } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { GameService } from "pixel-legion-game-logic";
+import { GameService, GameConfig } from "pixel-legion-game-logic";
 import Redis from "ioredis";
 
 const app = express();
@@ -40,7 +40,7 @@ io.on("connection", (socket) => {
     socket.join(roomId);
     if (!rooms.has(roomId)) {
       const svc = new GameService((state) =>
-        io.to(roomId).emit("state", state)
+        io.to(roomId).emit("state", state), GameConfig.PERFORMANCE.TICK_RATE
       );
       rooms.set(roomId, svc);
     }

@@ -8,7 +8,33 @@ export const GameConfig = {
   SPAWN: {
     INTERVAL_SECONDS: 3,
     PIXELS_PER_SPAWN: 15,
-    MAX_GROUPS_PER_PLAYER: 2,
+    MAX_GROUPS_PER_PLAYER: 1,
+  },
+  // Paramètres joueur
+  PLAYERS: {
+    // Palette cyclée à l'arrivée des joueurs
+    COLORS: [
+      "#ff4d4d", // rouge
+      "#4da6ff", // bleu
+      "#8cff66", // vert
+      "#ffcc00", // jaune
+      "#cc66ff", // violet
+      "#00e6e6", // cyan
+    ],
+  },
+  
+  // Combat / Attaque automatique entre groupes de joueurs différents
+  ATTACK: {
+    // Distance maximale entre centres de groupes pour engager le combat
+    RANGE: 100, // pixels
+    // NOUVELLE FORMULE : dégâts par seconde = attacker.pixelCount * PIXEL_DAMAGE_FACTOR
+    PIXEL_DAMAGE_FACTOR: 0.25, // 0.25 => 40 pixels infligent 10 pixels/sec
+    // (Déprécié) Ancienne formule à base de BASE_DPS + N * DPS_PER_PIXEL
+    BASE_DPS: 2,          // deprecated
+    DPS_PER_PIXEL: 0.10,  // deprecated
+    MIN_DPS: 1,           // deprecated
+    // Limite de perte de pixels par tick pour lisser la disparition (0 = illimité)
+    MAX_PIXEL_LOSS_PER_TICK: 0,
   },
   
   // Paramètres de performance
@@ -19,6 +45,8 @@ export const GameConfig = {
     MIN_FPS: 30,
     // Nombre max de pixels affichables simultanément (tous joueurs confondus)
     MAX_TOTAL_PIXELS: 10000,
+    TICK_RATE: 50, // ms entre chaque tick serveur (GameService dans server)
+    LOCAL_TICK_RATE: 30 // ms entre chaque tick local (SoloServer dans client)
   },
   
   // Paramètres visuels des pixels

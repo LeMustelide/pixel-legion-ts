@@ -1,15 +1,22 @@
 {
-  "files": [],
   "compilerOptions": {
     /* Language and Environment */
     "target": "es2016",
     /* Modules */
-    "module": "commonjs" /* Specify what module code is generated. */,
-    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
-    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
 
     /* Type Checking */
-    "strict": true /* Enable all strict type-checking options. */,
-    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+    "strict": true,
+    "skipLibCheck": true,
+
+    /* Output directory for build */
+    "outDir": "dist",
+
+    "baseUrl": ".",
+    "paths": {
+      "pixel-legion-game-logic": ["../game-logic/src"]
+    }
   }
 }

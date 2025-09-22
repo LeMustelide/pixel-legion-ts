@@ -1,11 +1,24 @@
 {
   "name": "pixel-legion-game-logic",
   "version": "1.0.0",
-  "main": "src/index.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "files": ["dist"],
+  "types": "dist/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    }
   },
-  "author": "",
-  "license": "ISC",
-  "description": ""
+
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format cjs,esm --out-dir dist --clean",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "tsup": "^8"
+  }
 }

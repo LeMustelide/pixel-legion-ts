@@ -9,7 +9,7 @@
         "paths": {
             "@core/*": ["./src/core/*"],
             "@net/*": ["./src/net/*"],
-            "@cmp/*": ["./src/cmp/*"],
+            "@cmp/*": ["./src/cmp/*"]
         },
         "strict": true
     }

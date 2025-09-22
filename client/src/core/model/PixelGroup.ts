@@ -1,5 +1,5 @@
 import type { Selectable } from "@core/interface/Selectable";
-import { getPooledPixel, SimplePixel } from "./PixelPool";
+import { SimplePixel } from "./PixelPool";
 
 export class PixelGroup implements Selectable {
 	public id: string = '';

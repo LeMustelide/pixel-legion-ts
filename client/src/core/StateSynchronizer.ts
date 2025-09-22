@@ -20,13 +20,12 @@ export class StateSynchronizer {
       } else {
         // Met à jour seulement la position pour le smoothing
         this.renderPlayers[playerId].updateServerPosition(playerData.x, playerData.y);
-        
-        // Met à jour les autres propriétés sans écraser la référence si pas nécessaire
-        if (this.renderPlayers[playerId].playerRef.selected !== playerData.selected) {
-          this.renderPlayers[playerId].playerRef.selected = playerData.selected;
+
+        if (this.renderPlayers[playerId].playerRef) {
+          this.renderPlayers[playerId].playerRef.hydrate(playerData);
+        } else {
+          this.renderPlayers[playerId].playerRef = Player.fromSerialized(playerData, playerId);
         }
-        
-        this.renderPlayers[playerId].playerRef = Player.fromSerialized(playerData);
       }
     }
     

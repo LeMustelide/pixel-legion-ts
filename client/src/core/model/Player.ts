@@ -7,9 +7,9 @@ export class Player implements Selectable {
   public id: string;
   public x: number;
   public y: number;
-  public selected = false;
   public target: { x: number, y: number } | null = null;
   public pixelGroups: PixelGroup[] = [];
+  public selectedEntity: { kind: "player" | "pixelGroup"; id: string } | null = null;
 
   constructor(id: string, x = 0, y = 0) {
     this.id = id;
@@ -36,6 +36,23 @@ export class Player implements Selectable {
     return p;
   }
 
+  hydrate(data: any) {
+    this.x = data.x ?? this.x;
+    this.y = data.y ?? this.y;
+    this.target = data.target ?? this.target;
+    if (data.pixelGroups && Array.isArray(data.pixelGroups)) {
+      this.pixelGroups = data.pixelGroups.map((g: any) => {
+        const group = new PixelGroup(g.pixelCount ?? 0);
+        if (g.id) group.id = g.id;
+        if (Array.isArray(g.pixels)) {
+          group.pixels = g.pixels.map((px: any) => new SimplePixel(px.x, px.y, px.moveRadius, px.color));
+          group.pixelCount = group.pixels.length;
+        }
+        return group;
+      });
+    }
+  }
+
   /** Met à jour la position depuis le serveur */
   updateFromServer(x: number, y: number, target?: { x: number, y: number }) {
     this.x = x;
@@ -48,9 +65,8 @@ export class Player implements Selectable {
     this.target = { x: targetX, y: targetY };
   }
 
-  /** Sélection / désélection */
-  setSelected(sel: boolean) {
-    this.selected = sel;
+  selectEntity(target: { kind: "player" | "pixelGroup"; id: string } | null) {
+    this.selectedEntity = target;
   }
   
 }

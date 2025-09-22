@@ -4,7 +4,36 @@ Un petit jeu web multijoueur 2D (RTS simpliste) construit avec une stack moderne
 
 ---
 
-## 📦 Tech Stack
+## 🔥 Système de Combat Automatique
+
+Les groupes de joueurs différents s'attaquent automatiquement lorsqu'ils entrent dans la portée (`ATTACK.RANGE`).
+
+Nouvelle formule (simplifiée et entièrement proportionnelle) :
+
+```
+dégâts_par_seconde = attacker.pixelCount * PIXEL_DAMAGE_FACTOR
+```
+
+Chaque point de dégât supprime immédiatement un pixel (accumulation fractionnaire gérée : les fractions se cumulent d'un tick à l'autre).
+
+Paramètres actuels :
+
+```ts
+ATTACK: {
+   RANGE: 100,
+   PIXEL_DAMAGE_FACTOR: 0.25, // 40 pixels => 10 pixels détruits / seconde
+   MAX_PIXEL_LOSS_PER_TICK: 0, // 0 = sans limite
+   // Champs legacy (désormais non utilisés) : BASE_DPS, DPS_PER_PIXEL, MIN_DPS
+}
+```
+
+Suppression des groupes : dès que `pixelCount` tombe à 0, le groupe est marqué détruit et retiré au tick suivant.
+
+Test local : `game-logic/src/test/combatSimulation.ts` peut être adapté pour la nouvelle formule.
+
+---
+
+## �📦 Tech Stack
 
 * **Frontend**
 
@@ -95,6 +124,20 @@ root/
    ```
 
 ---
+
+## ⚒️ Build docker
+
+1. **Build backend**
+
+   ```bash
+   docker build --build-context logic=./game-logic --pull --rm -f 'server\Dockerfile' -t 'ghcr.io/lemustelide/pixel-legion-ts/server:main' 'server'
+   ```
+
+2. **Build frontend**
+
+   ```bash
+   docker build --build-context logic=./game-logic --pull --rm -f 'client\Dockerfile' -t 'ghcr.io/lemustelide/pixel-legion-ts/client:main' 'client'
+   ```
 
 ## 🎯 Workflow WebSocket
 
